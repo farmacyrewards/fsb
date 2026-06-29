@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Perennial — Brand Portal</title>
+<title>Brand Partner Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#0C0F0A;--panel:#141812;--surface:#1C2118;--border:rgba(255,255,255,0.08);--cream:#F5F0E8;--muted:#7A8A78;--purple:#5B3F8A;--purple-light:rgba(91,63,138,0.15);--green:#2ECC71;--green-dim:rgba(46,204,113,0.12);--ghf:#10B981;--plus:#8B5CF6;}
@@ -99,10 +100,10 @@ body{font-family:'Inter',sans-serif;background:var(--ink);color:var(--cream);min
 
 <div class="login-screen" id="login-screen">
   <div class="login-card">
-    <div class="login-logo">Perennial<span>.</span></div>
+    <div class="login-logo">Brand<span> Portal</span></div>
     <div class="login-eyebrow">Brand Portal</div>
     <div class="login-title">Welcome back</div>
-    <div class="login-sub">Sign in to view your brand performance across all Perennial partner locations.</div>
+    <div class="login-sub">Sign in to view your brand performance across all partner locations.</div>
     <div class="login-field">
       <label class="login-label">Email</label>
       <input class="login-input" type="email" id="login-email" placeholder="you@yourbrand.com">
@@ -113,14 +114,14 @@ body{font-family:'Inter',sans-serif;background:var(--ink);color:var(--cream);min
     </div>
     <div class="login-error" id="login-error"></div>
     <button class="login-btn" onclick="doLogin()">Sign in</button>
-    <div class="login-note">Access is provided by your Perennial account manager.</div>
+    <div class="login-note">Access is provided by your account manager.</div>
   </div>
 </div>
 
 <nav class="portal-nav" id="portal-nav">
   <div class="nav-left">
     <div style="display:flex;align-items:baseline;gap:6px">
-      <div class="nav-logo-word">Perennial</div>
+      <div class="nav-logo-word">Brand Portal</div>
       <div class="nav-dot"></div>
     </div>
     <div class="nav-tag">Brand Portal</div>
@@ -249,7 +250,7 @@ window.renderPortal = function(brand, data){
 
   // KPIs
   o += '<div class="hero-section">'
-    +'<div class="hero-eyebrow '+ac+'">'+bname+' &middot; Perennial Partner Report</div>'
+    +'<div class="hero-eyebrow '+ac+'">'+bname+' &middot; Partner Report</div>'
     +'<h1 class="hero-title">'+(isGHF?'Your product is <span class="ghf">moving.</span>':'Your brand is <span class="plus">winning.</span>')+'</h1>'
     +'<div class="hero-meta">Period: '+upd+' &middot; '+locs.length+' location'+(locs.length!==1?'s':'')+'</div>'
     +'<div class="kpi-grid">'
@@ -274,7 +275,7 @@ window.renderPortal = function(brand, data){
   // Trend
   const mx=Math.max(...TREND.map(t=>isGHF?t.ghf:t.plus));
   let fl=true;
-  o += '<hr class="divider"><div class="section"><div class="sec-eye '+ac+'">Growth Trend</div><div class="sec-title">Units since Perennial launched</div><div class="sec-desc">Gray = pre-program &middot; Colored = Perennial active</div><div class="trend-wrap"><div class="trend-bars">';
+  o += '<hr class="divider"><div class="section"><div class="sec-eye '+ac+'">Growth Trend</div><div class="sec-title">Units since program launched</div><div class="sec-desc">Gray = pre-program &middot; Colored = program active</div><div class="trend-wrap"><div class="trend-bars">';
   TREND.forEach(t=>{
     const v=isGHF?t.ghf:t.plus;
     const h=Math.round(v/mx*100);
@@ -298,7 +299,7 @@ window.renderPortal = function(brand, data){
   o += '</div></div>';
 
   // Footer
-  o += '<div class="portal-footer"><div class="footer-logo">Perennial<span>.</span></div><div class="footer-note">'+bname+' &middot; Confidential &middot; '+upd+'</div></div>';
+  o += '<div class="portal-footer"><div class="footer-logo">Brand<span> Portal</span></div><div class="footer-note">'+bname+' &middot; Confidential &middot; '+upd+'</div></div>';
 
   document.getElementById('portal-content').innerHTML = o;
   document.getElementById('portal-content').style.display = 'block';
