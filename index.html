@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -92,6 +91,10 @@
   .mgr-panel.open{display:block}
   .mgr-header{background:var(--teal);padding:.875rem 1.25rem;display:flex;align-items:center;justify-content:space-between}
   .mgr-header-title{font-size:13px;font-weight:600;color:var(--white)}
+  
+  .pw-input[type="email"]{width:100%;padding:9px 12px;font-size:13px;border:1px solid var(--border);border-radius:8px;background:var(--cream);color:var(--charcoal);font-family:inherit;outline:none;margin-bottom:8px;display:block}
+  .pw-input[type="email"]:focus{border-color:var(--navy)}
+
   .mgr-close{font-size:20px;color:rgba(255,255,255,0.5);cursor:pointer;padding:0 4px;line-height:1}
   .mgr-close:hover{color:var(--white)}
   .mgr-body{padding:1.25rem}
@@ -569,10 +572,24 @@
     <div class="mgr-body">
       <div id="pw-section">
         <div class="pw-error" id="pw-error"></div>
-        <div class="pw-wrap">
-          <input class="pw-input" type="password" id="pw-input" placeholder="Password" maxlength="30"
+        <div style="margin-bottom:.75rem">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:4px">Email</div>
+          <input class="pw-input" type="email" id="mgr-email" placeholder="manager@email.com"
+            style="margin-bottom:8px;font-size:13px"
             onkeydown="if(event.key==='Enter')checkPW()">
-          <button class="pw-btn" onclick="checkPW()">Unlock</button>
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:4px">Password</div>
+          <div class="pw-wrap">
+            <input class="pw-input" type="password" id="pw-input" placeholder="Password" maxlength="50"
+              onkeydown="if(event.key==='Enter')checkPW()">
+            <button class="pw-btn" id="pw-btn" onclick="checkPW()">Sign in</button>
+          </div>
+        </div>
+
+        <div style="text-align:center;margin-top:.75rem">
+          <button onclick="requestMgrAccess()" style="font-size:11px;color:var(--navy);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit">Request access</button>
+        </div>
+        <div id="mgr-pending" style="display:none;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:.75rem;font-size:12px;color:#92400E;text-align:center">
+          ⏳ Your access request is pending approval.
         </div>
       </div>
       <div class="upload-area" id="upload-area"
@@ -803,21 +820,82 @@
       tapTimer=setTimeout(()=>{tapCount=0;},2000);
     }
   }
+
+  function requestMgrAccess(){
+    const email = (document.getElementById('mgr-email')||{value:''}).value.trim();
+    const val   = document.getElementById('pw-input').value;
+    const errEl = document.getElementById('pw-error');
+    if(!email || !val){ if(errEl) errEl.textContent='Enter email and a password to request access.'; return; }
+    if(val.length < 8){ if(errEl) errEl.textContent='Password must be at least 8 characters.'; return; }
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js').then(({getAuth, createUserWithEmailAndPassword})=>{
+      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(({getDatabase, ref, set})=>{
+        import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js').then(({getApps})=>{
+          const app  = getApps()[0];
+          const auth = getAuth(app);
+          const db   = getDatabase(app);
+          createUserWithEmailAndPassword(auth, email, val).then(cred=>{
+            return set(ref(db, 'managers/' + cred.user.uid), {
+              email: email, status: 'pending', shop: SHOP_NAME,
+              requestedAt: new Date().toISOString()
+            });
+          }).then(()=>{
+            if(errEl) errEl.textContent='';
+            document.getElementById('mgr-pending').style.display='block';
+          }).catch(e=>{
+            if(errEl) errEl.textContent = e.code==='auth/email-already-in-use'
+              ? 'Account exists — try signing in.' : 'Request failed: '+e.message;
+          });
+        });
+      });
+    });
+  }
+
   function closePanel(){
     document.getElementById('mgr-panel').classList.remove('open');
     tapCount=0;
   }
   function checkPW(){
-    const val=document.getElementById('pw-input').value;
-    if(val===MANAGER_PASSWORD){
-      document.getElementById('pw-section').style.display='none';
-      document.getElementById('upload-area').classList.add('visible');
-    } else {
-      const inp=document.getElementById('pw-input');
-      (document.getElementById('pw-error')||{}).textContent ='Incorrect password.';
-      inp.classList.add('error'); inp.value='';
-      setTimeout(()=>inp.classList.remove('error'),400);
+    const email = (document.getElementById('mgr-email')||{value:''}).value.trim();
+    const val   = document.getElementById('pw-input').value;
+    const errEl = document.getElementById('pw-error');
+    const btn   = document.getElementById('pw-btn');
+    if(!email || !val){
+      if(errEl) errEl.textContent = 'Enter your email and password.';
+      return;
     }
+    if(btn){ btn.disabled=true; btn.textContent='Signing in...'; }
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js').then(({getAuth, signInWithEmailAndPassword, setPersistence, browserSessionPersistence})=>{
+      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(({getDatabase, ref, get})=>{
+        import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js').then(({getApps})=>{
+          const app  = getApps()[0];
+          const auth = getAuth(app);
+          const db   = getDatabase(app);
+          setPersistence(auth, browserSessionPersistence).then(()=>{
+            return signInWithEmailAndPassword(auth, email, val);
+          }).then(cred=>{
+            return get(ref(db, 'managers/' + cred.user.uid + '/status'));
+          }).then(snap=>{
+            const status = snap.exists() ? snap.val() : 'pending';
+            if(status === 'approved'){
+              document.getElementById('pw-section').style.display='none';
+              document.getElementById('upload-area').classList.add('visible');
+              if(errEl) errEl.textContent='';
+            } else if(status === 'pending'){
+              document.getElementById('mgr-pending').style.display='block';
+              if(errEl) errEl.textContent='';
+            } else {
+              if(errEl) errEl.textContent='Access denied.';
+            }
+            if(btn){ btn.disabled=false; btn.textContent='Sign in'; }
+          }).catch(e=>{
+            if(errEl) errEl.textContent='Incorrect email or password.';
+            const inp=document.getElementById('pw-input');
+            if(inp){ inp.classList.add('error'); inp.value=''; setTimeout(()=>inp.classList.remove('error'),400); }
+            if(btn){ btn.disabled=false; btn.textContent='Sign in'; }
+          });
+        });
+      });
+    });
   }
 
   const COLORS=['#2A6B6F','#7A9E7E','#B5830A','#6B4FA0','#C06A6A','#3D7A80','#8B6914','#5B3F8A','#4A8C70','#9E6B2A','#3A5F8C','#7A4A9E','#5C8C3A','#8C4A5C','#3A7A5C','#6B8C3A','#8C6B3A','#4A6B8C'];
