@@ -1081,7 +1081,7 @@
       const ghfU = g.units||g.ghf||0;
       const plusU= p.units||p.plus||0;
       const netS = s.sales||0;
-      const monthlyPts = Math.round(ghfU*5 + plusU*5 + netS*1);
+      const monthlyPts = Math.round(ghfU*10 + plusU*10);
       const allTimePts = getAllTime(name);
       return {
         name, txn:t.txn||0, sales:netS,
@@ -1892,8 +1892,8 @@
           const sales=Math.round(d.sales*100)/100;
           const ghf=Math.round(d.ghf);
           const plus=Math.round(d.plus);
-          // Points: 5pts per GHF unit, 5pts per Plus unit, 1pt per $1 net sales
-          const monthlyPts=Math.round(ghf*5 + plus*5 + sales*1);
+          // Points: 10pts per GHF unit, 10pts per Plus unit (brand units only)
+          const monthlyPts=Math.round(ghf*10 + plus*10);
           return {
             name, txn, sales,
             avg: txn>0?Math.round(sales/txn*100)/100:0,
