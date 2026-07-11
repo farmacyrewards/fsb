@@ -864,17 +864,14 @@
       return;
     }
     if(btn){ btn.disabled=true; btn.textContent='Signing in...'; }
-    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js').then(({getAuth, signInWithEmailAndPassword, setPersistence, browserSessionPersistence})=>{
-      import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(({getDatabase, ref, get})=>{
-        import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js').then(({getApps})=>{
-          const app  = getApps()[0];
-          const auth = getAuth(app);
-          const db   = getDatabase(app);
-          setPersistence(auth, browserSessionPersistence).then(()=>{
-            return signInWithEmailAndPassword(auth, email, val);
-          }).then(cred=>{
-            return get(ref(db, 'managers/' + cred.user.uid + '/status'));
-          }).then(snap=>{
+    (function(){
+      const auth = window.auth;
+      const db   = window.db;
+      window._fbSignIn(auth, email, val).then(cred=>{
+        return import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(({get, ref})=>{
+          return get(ref(db, 'managers/' + cred.user.uid + '/status'));
+        });
+      }).then(snap=>{
             const status = snap.exists() ? snap.val() : 'pending';
             if(status === 'approved'){
               document.getElementById('pw-section').style.display='none';
@@ -887,15 +884,13 @@
               if(errEl) errEl.textContent='Access denied.';
             }
             if(btn){ btn.disabled=false; btn.textContent='Sign in'; }
-          }).catch(e=>{
-            if(errEl) errEl.textContent='Incorrect email or password.';
-            const inp=document.getElementById('pw-input');
-            if(inp){ inp.classList.add('error'); inp.value=''; setTimeout(()=>inp.classList.remove('error'),400); }
-            if(btn){ btn.disabled=false; btn.textContent='Sign in'; }
-          });
-        });
+      }).catch(e=>{
+        if(errEl) errEl.textContent='Incorrect email or password.';
+        const inp=document.getElementById('pw-input');
+        if(inp){ inp.classList.add('error'); inp.value=''; setTimeout(()=>inp.classList.remove('error'),400); }
+        if(btn){ btn.disabled=false; btn.textContent='Sign in'; }
       });
-    });
+    })();
   }
 
   const COLORS=['#2A6B6F','#7A9E7E','#B5830A','#6B4FA0','#C06A6A','#3D7A80','#8B6914','#5B3F8A','#4A8C70','#9E6B2A','#3A5F8C','#7A4A9E','#5C8C3A','#8C4A5C','#3A7A5C','#6B8C3A','#8C6B3A','#4A6B8C'];
@@ -2073,12 +2068,23 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDraw
 })();
 </script>
 <script type="module">
-  import { initializeApp }                    from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getDatabase, ref, get, onValue }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+  import { initializeApp }                        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getDatabase, ref, get, onValue, set }  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+  import { getAuth, signInWithEmailAndPassword,
+           setPersistence, browserSessionPersistence }
+                                                  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-  const app = initializeApp(firebaseConfig);
-  const db  = getDatabase(app);
-  window.db = db;
+  const app  = initializeApp(firebaseConfig);
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+  await setPersistence(auth, browserSessionPersistence);
+
+  // Expose globally so non-module scripts can access
+  window.db   = db;
+  window.auth = auth;
+  window._fbSet = set;
+  window._fbRef = ref;
+  window._fbSignIn = signInWithEmailAndPassword;
 
   // Load live data
   onValue(ref(db, 'leaderboard'), snap => {
@@ -2114,18 +2120,12 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDraw
   };
   window.saveToFirebase = async function(payload) {
     try {
-      const { set, ref: dbRef } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
-      const { getAuth }         = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-      const { getApps }         = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-      const app  = getApps()[0];
-      const auth = getAuth(app);
-      const db2  = window.db || (await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js')).getDatabase(app);
-      const user = auth.currentUser;
-      if(!user) { console.error('Not authenticated'); return false; }
-      await set(dbRef(db2, 'leaderboard'), payload);
+      const user = window.auth && window.auth.currentUser;
+      if(!user) { console.error('Not authenticated - no currentUser'); return false; }
+      await window._fbSet(window._fbRef(window.db, 'leaderboard'), payload);
       return true;
     } catch(e) {
-      console.error('Firebase save error:', e);
+      console.error('Firebase save error:', e.message);
       return false;
     }
   };
