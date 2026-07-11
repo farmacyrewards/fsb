@@ -911,7 +911,7 @@
           +'<div class="rank">'+rl(i)+'</div>'
           +'<div class="rep-info"><div class="avatar" style="background:'+color+'22;color:'+color+'">'+ini(rep.name)+'</div>'
           +(function(){
-            if(tab==='ghf'||tab==='plus'){
+            if(PRIZE_TABS && PRIZE_TABS.includes(tab)){
               const fs=getStreak(STREAK_KEY_FIRE(rep.name));
               const rs=getStreak(STREAK_KEY_RANK(rep.name));
               return '<div class="rep-name">'+rep.name
@@ -924,8 +924,8 @@
           +'<div class="val">'+c.valFn(rep)+'</div></div>';
       }).join('');
       document.getElementById('board-'+tab).innerHTML=
-        ((tab==='ghf'||tab==='plus') ? renderCampaignBanner(tab) : '') +
-        ((tab==='ghf'||tab==='plus') ? firstPlaceBanner(tab,data) : '') +
+        (PRIZE_TABS.includes(tab) ? renderCampaignBanner(tab) : '') +
+        (PRIZE_TABS.includes(tab) ? firstPlaceBanner(tab,data) : '') +
         '<div class="metrics">'
         +'<div class="metric"><div class="metric-label">'+c.m1Label+'</div><div class="metric-val">'+c.m1Fn(data)+'</div></div>'
         +'<div class="metric"><div class="metric-label">'+c.m2Label+'</div><div class="metric-val">'+c.m2Fn(data)+'</div></div>'
@@ -1266,16 +1266,21 @@
   // ── 1st place prize config ────────────────────────────
   // Change these to set the monthly prize per brand tab
   const FIRST_PLACE_PRIZES = {
-    ghf:  'MANAGER PRIZE HERE',   // e.g. "$25 Gift Card" or "GHF Branded Hoodie"
-    plus: 'MANAGER PRIZE HERE',   // e.g. "$25 Gift Card" or "Plus Products Swag"
+    ghf:  '$100 Gift Card',   // prize for top GHF seller
+    avg:  '$100 Gift Card',   // prize for top ATV seller
+    plus: 'MANAGER PRIZE HERE',
   };
+
+  // ── PRIZE_TABS: which tabs show the first-place banner this month ──
+  // Change these each month to match whichever categories have prizes
+  const PRIZE_TABS = ['ghf', 'avg'];
 
   function firstPlaceBanner(tab, data){
     if(!data || !data.length) return '';
     const winner = data[0]; // current leader, not final winner
     const prize = FIRST_PLACE_PRIZES[tab] || 'Prize TBD';
-    const label = tab === 'ghf' ? 'Top GHF Seller' : 'Top Plus Seller';
-    const brand = tab === 'ghf' ? 'Glass House Farms' : 'Plus Products';
+    const label = tab === 'ghf' ? 'Top GHF Seller' : tab === 'avg' ? 'Top ATV Seller' : 'Top Plus Seller';
+    const brand = tab === 'ghf' ? 'Glass House Farms' : tab === 'avg' ? 'Highest Avg Ticket' : 'Plus Products';
     const c = TAB_CONFIG[tab];
     return '<div class="first-place-banner">'
       +'<div class="first-place-crown">👑</div>'
