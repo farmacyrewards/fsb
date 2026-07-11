@@ -2121,7 +2121,6 @@
   const app  = initializeApp(firebaseConfig);
   const db   = getDatabase(app);
   const auth = getAuth(app);
-  await setPersistence(auth, browserSessionPersistence);
 
   // Expose globally so non-module scripts can access
   window.db   = db;
@@ -2130,11 +2129,14 @@
   window._fbRef = ref;
   window._fbSignIn = signInWithEmailAndPassword;
 
+  // Set persistence (non-blocking)
+  setPersistence(auth, browserSessionPersistence).catch(e => console.warn('Persistence error:', e));
+
   // Load live data
   onValue(ref(db, 'leaderboard'), snap => {
     if(!snap.exists()) {
-      document.getElementById('loading-state').style.display = 'none';
-      document.getElementById('no-data-state').style.display = 'block';
+      (document.getElementById('loading-state')||{style:{}}).style.display = 'none';
+      (document.getElementById('no-data-state')||{style:{}}).style.display = 'block';
       return;
     }
     const data = snap.val();
