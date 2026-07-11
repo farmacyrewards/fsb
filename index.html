@@ -573,11 +573,16 @@
     <div class="mgr-body">
       <div id="pw-section">
         <div class="pw-error" id="pw-error"></div>
-        <div class="pw-wrap">
-          <input class="pw-input" type="password" id="pw-input" placeholder="Password" maxlength="30"
-            onkeydown="if(event.key==='Enter')checkPW()">
-          <button class="pw-btn" onclick="checkPW()">Unlock</button>
+        <div style="margin-bottom:8px">
+          <input class="pw-input" type="email" id="mgr-email" placeholder="manager@email.com"
+            style="font-size:13px" onkeydown="if(event.key==='Enter')checkPW()">
         </div>
+        <div class="pw-wrap">
+          <input class="pw-input" type="password" id="pw-input" placeholder="Password" maxlength="50"
+            onkeydown="if(event.key==='Enter')checkPW()">
+          <button class="pw-btn" id="pw-btn" onclick="checkPW()">Sign in</button>
+        </div>
+        <div id="mgr-pending" style="display:none;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:.75rem;font-size:12px;color:#92400E;text-align:center;margin-top:.5rem">⏳ Access request pending approval.</div>
       </div>
       <div class="upload-area" id="upload-area"
         ondragover="event.preventDefault();this.classList.add('drag')"
@@ -814,7 +819,6 @@
 
   function renderPointsBoard(reps){
     window._pointsData = reps || [];
-    // Also populate dropdown if Points tab is already active
     var sel = document.getElementById('pts-name-select');
     if(sel && sel.options.length <= 1 && reps && reps.length){
       reps.forEach(function(r){
@@ -823,83 +827,16 @@
         sel.appendChild(o);
       });
     }
-    if(false){ /* original render disabled — handled via PIN */ 
-    if(!reps||!reps.length){
-      document.getElementById('board-points').innerHTML='<div class="loading-bar">Upload data to see points</div>';
-      return;
-    }
-
-    // Add all-time pts to each rep
-    const withAllTime = reps.map(r=>({ ...r, allTime: getAllTime(r.name) }));
-    // Sort by monthly pts
-    const sorted = [...withAllTime].sort((a,b)=>b.monthlyPts-a.monthlyPts);
-
-    const totalMonthly = sorted.reduce((s,r)=>s+r.monthlyPts,0);
-    const topRep = sorted[0];
-
-    // Team summary
-    const teamHtml =
-      '<div class="points-hero">'
-      +'<div class="points-hero-label">Shop Points — This Month</div>'
-      +'<div class="points-total">'+totalMonthly.toLocaleString()+'</div>'
-      +'<div class="points-sub">Total points earned by the team</div>'
-      +'<div class="points-split">'
-      +'<div class="points-pill"><div class="points-pill-val">'+topRep.monthlyPts.toLocaleString()+'</div><div class="points-pill-label">Top: '+topRep.name.split(' ')[0]+'</div></div>'
-      +'<div class="points-pill"><div class="points-pill-val">'+Math.round(totalMonthly/sorted.length).toLocaleString()+'</div><div class="points-pill-label">Team avg</div></div>'
-      +'</div></div>';
-
-    // How to earn
-    const earnHtml =
-      '<div class="earn-card">'
-      +'<div class="earn-header">How to earn points</div>'
-      +'<div class="earn-row"><span class="earn-icon">🌲</span><span class="earn-desc">Per GHF unit sold</span><span class="earn-pts">10 pts</span></div>'
-      +'<div class="earn-row"><span class="earn-icon">🟪</span><span class="earn-desc">Per Plus unit sold</span><span class="earn-pts">10 pts</span></div>'
-      +'<div class="earn-row"><span class="earn-icon">💵</span><span class="earn-desc">Net sales (0 pts)</span><span class="earn-pts">1 pt</span></div>'
-      +'</div>';
-
-    // Redemption tiers (based on top rep's all-time points for demo)
-    const demoAllTime = topRep.allTime || topRep.monthlyPts;
-    const tierHtml = '<div class="redeem-card">'
-      +'<div class="redeem-header">Redemption tiers — All-time points</div>'
-      + TIERS.map(tier=>{
-          const pct = Math.min(Math.round(demoAllTime/tier.pts*100),100);
-          const unlocked = demoAllTime >= tier.pts;
-          return '<div class="tier-row'+(unlocked?' unlocked':'')+'"><div class="tier-badge">'+tier.emoji+'</div>'
-            +'<div class="tier-info"><div class="tier-reward">'+tier.reward+'</div>'
-            +'<div class="tier-pts-needed">'+tier.pts.toLocaleString()+' points</div>'
-            +'<div class="tier-progress"><div class="tier-bar-bg"><div class="tier-bar-fill" style="width:'+pct+'%"></div></div>'
-            +'<div class="tier-pct">'+pct+'% there</div></div></div>'
-            +(unlocked?'<div class="tier-unlocked-badge">✓ Unlocked</div>':'')
-            +'</div>';
-        }).join('')
-      +'</div>';
-
-    // Rep leaderboard
-    const repRows = sorted.map((rep,i)=>{
-      const color=COLORS[i%COLORS.length];
-      return '<div class="pts-row'+(i===0?' hl':'')+'"><div class="rank">'+rl(i)+'</div>'
-        +'<div class="rep-info"><div class="avatar" style="background:'+color+'22;color:'+color+'">'+ini(rep.name)+'</div>'
-        +'<div class="rep-name">'+rep.name+'</div></div>'
-        +'<div class="pts-val">'+rep.monthlyPts.toLocaleString()+'</div>'
-        +'<div class="pts-monthly">'+rep.allTime.toLocaleString()+'</div>'
-        +'</div>';
-    }).join('');
-
-    const lbHtml = '<div class="points-leaderboard">'
-      +'<div class="pts-head"><div style="text-align:center">#</div><div>Rep</div><div style="text-align:right">This Month</div><div style="text-align:right">All-Time</div></div>'
-      +repRows+'</div>';
-
-    document.getElementById('board-points').innerHTML =
-      '<div class="perennial-badge">⭐ Shop Rewards</div>'
-      +teamHtml+earnHtml+tierHtml+lbHtml;
   }
 
 
-  // ── Export functions ──────────────────────────────────────────
-
-
-  // ── Points tab PIN login ───────────────────────────────────────
-  } /* end if(false) */
+  async function getPinFirebase(name){
+    try {
+      var m = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+      var snap = await m.get(m.ref(window.db, 'pins/fsb/' + name.replace(/\s/g,'_')));
+      return snap.exists() ? String(snap.val()) : null;
+    } catch(e){ return null; }
+  }
 
   function getPin(name){
     return localStorage.getItem('pin_fsb_'+name.replace(/\s/g,'_')) || '';
@@ -920,26 +857,29 @@
     var err  = document.getElementById('pts-pin-error');
     if(!name){ err.textContent = 'Select your name.'; return; }
     if(!pin) { err.textContent = 'Enter your PIN.';  return; }
-    var saved = getPin(name);
-    if(!saved){ err.textContent = 'No PIN set — ask your manager.'; return; }
-    if(pin !== saved){
-      err.textContent = 'Incorrect PIN.';
-      document.getElementById('pts-pin-input').value = '';
-      return;
-    }
-    err.textContent = '';
-    document.getElementById('pts-pin-wall').style.display = 'none';
-    document.getElementById('pts-personal').style.display = 'block';
-    // Show personal points
-    var rep = (window._pointsData || []).find(function(r){ return r.name === name; }) || {};
-    var monthly = rep.monthlyPts || 0;
-    document.getElementById('pts-personal-content').innerHTML =
-      '<div style="text-align:center;padding:1.5rem 0">'
-      + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:6px">' + name.split(' ')[0] + ' — This Period</div>'
-      + '<div style="font-family:Georgia,serif;font-size:3.5rem;color:var(--charcoal);line-height:1">' + monthly.toLocaleString() + '</div>'
-      + '<div style="font-size:13px;color:var(--gray);margin-top:6px">points earned</div>'
-      + '</div>';
+    err.textContent = 'Checking...';
+    getPinFirebase(name).then(function(fbPin){
+      var saved = fbPin || getPin(name);
+      if(!saved){ err.textContent = 'No PIN set — ask your manager.'; return; }
+      if(pin !== String(saved)){
+        err.textContent = 'Incorrect PIN.';
+        document.getElementById('pts-pin-input').value = '';
+        return;
+      }
+      err.textContent = '';
+      document.getElementById('pts-pin-wall').style.display = 'none';
+      document.getElementById('pts-personal').style.display = 'block';
+      var rep = (window._pointsData || []).find(function(r){ return r.name === name; }) || {};
+      var monthly = rep.monthlyPts || 0;
+      document.getElementById('pts-personal-content').innerHTML =
+        '<div style="text-align:center;padding:1.5rem 0">'
+        + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:6px">' + name.split(' ')[0] + ' — This Period</div>'
+        + '<div style="font-family:Georgia,serif;font-size:3.5rem;color:var(--charcoal);line-height:1">' + monthly.toLocaleString() + '</div>'
+        + '<div style="font-size:13px;color:var(--gray);margin-top:6px">points earned</div>'
+        + '</div>';
+    });
   }
+
 
   function ptsLogout(){
     document.getElementById('pts-pin-wall').style.display = 'block';
