@@ -396,6 +396,22 @@
 
 
 
+
+  /* ── Points PIN wall ─────────────────────────────────── */
+  .pts-pin-wall{background:var(--white);border:0.5px solid var(--border);border-radius:14px;padding:2rem 1.5rem;text-align:center;margin-top:.5rem}
+  .pts-pin-icon{font-size:36px;margin-bottom:.75rem}
+  .pts-pin-title{font-size:15px;font-weight:600;color:var(--charcoal);margin-bottom:.25rem}
+  .pts-pin-sub{font-size:12px;color:var(--gray);margin-bottom:1.25rem;line-height:1.5}
+  .pts-pin-fields{display:flex;flex-direction:column;gap:8px;max-width:280px;margin:0 auto 1rem}
+  .pts-pin-select{width:100%;padding:10px 12px;font-size:14px;border:1px solid var(--border);border-radius:9px;background:var(--cream);color:var(--charcoal);font-family:inherit;outline:none}
+  .pts-pin-input{width:100%;padding:10px 12px;font-size:18px;letter-spacing:6px;text-align:center;border:1px solid var(--border);border-radius:9px;background:var(--cream);color:var(--charcoal);font-family:monospace;outline:none}
+  .pts-pin-input.err{border-color:#EF4444;animation:shake .3s}
+  .pts-pin-btn{width:100%;max-width:280px;margin:0 auto;padding:11px;font-size:14px;font-weight:600;color:#fff;background:var(--navy);border:none;border-radius:10px;cursor:pointer;font-family:inherit;display:block}
+  .pts-pin-error{font-size:12px;color:#EF4444;min-height:16px;margin-top:.5rem}
+  .pts-personal{display:none}
+  .pts-personal.visible{display:block}
+  .pts-go-btn{display:block;width:100%;padding:12px;font-size:14px;font-weight:600;text-align:center;background:linear-gradient(135deg,#2D1B69,#5B3F8A);color:#fff;border-radius:12px;text-decoration:none;margin-top:1rem}
+
   @media(max-width:520px){
     .tab{font-size:10px;padding:7px 2px}.tab .ti{font-size:13px}
     .thead,.rep-row{grid-template-columns:34px 1fr 80px}
@@ -621,8 +637,8 @@
   <div class="tabs">
     <button class="tab active txn" onclick="switchTab('txn',this)"><span class="ti">🧾</span>Transactions</button>
     <button class="tab sales" onclick="switchTab('sales',this)"><span class="ti">💵</span>Net Sales</button>
-    <button class="tab avg" onclick="switchTab('avg',this)"><span class="ti">🛒</span>ATV</button>
-    <button class="tab ghf" onclick="switchTab('ghf',this)"><span class="ti">🌲</span>GHF Units</button>
+    <button class="tab avg" onclick="switchTab('avg',this)"><span class="ti">🛒</span>ATV <span style="font-size:9px;background:#FFD700;color:#5B3A00;padding:1px 5px;border-radius:6px;font-weight:700;vertical-align:middle">$100</span></button>
+    <button class="tab ghf" onclick="switchTab('ghf',this)"><span class="ti">🌲</span>GHF Units <span style="font-size:9px;background:#FFD700;color:#5B3A00;padding:1px 5px;border-radius:6px;font-weight:700;vertical-align:middle">$100</span></button>
     <button class="tab plus" onclick="switchTab('plus',this)"><span class="ti">🟪</span>Plus Units</button>
     <button class="tab points" onclick="switchTab('points',this)"><span class="ti">⭐</span>Points</button>
   </div>
@@ -844,7 +860,7 @@
 
   window.renderAll=function(liveData){
     renderTeamChallenge(liveData);
-    ['txn','sales','avg','ghf','plus'].forEach(tab=>{
+    ['txn','sales','avg','ghf','plus','points'].forEach(tab=>{
       const c=TAB_CONFIG[tab];
       const data=liveData[tab];
       if(!data||!data.length){document.getElementById('board-'+tab).innerHTML='<div class="loading-bar">No data</div>';return;}
@@ -1747,6 +1763,90 @@
   // Store liveData ref for stats building
   window._lastLiveData = null;
 
+
+
+  // ── Points tab PIN login ───────────────────────────────────────
+  function ptsLogin(){
+    const name = document.getElementById('pts-name-select').value;
+    const pin  = document.getElementById('pts-pin-input').value.trim();
+    const err  = document.getElementById('pts-pin-error');
+    if(!name){ err.textContent='Select your name.'; return; }
+    if(!pin)  { err.textContent='Enter your PIN.'; return; }
+    const savedPin = localStorage.getItem('rep_pin_' + SHOP_NAME.replace(/\s/g,'_') + '_' + name.replace(/\s/g,'_'));
+    if(!savedPin){ err.textContent='No PIN set. Ask your manager.'; return; }
+    if(pin !== savedPin){
+      err.textContent='Incorrect PIN.';
+      const inp = document.getElementById('pts-pin-input');
+      inp.classList.add('err'); inp.value='';
+      setTimeout(()=>inp.classList.remove('err'),400);
+      return;
+    }
+    err.textContent='';
+    showPtsPersonal(name);
+  }
+
+  function showPtsPersonal(name){
+    document.getElementById('pts-pin-wall').style.display='none';
+    const personal = document.getElementById('pts-personal');
+    personal.classList.add('visible');
+    // Build personal points view
+    const ld = window._lastLiveData || {};
+    const ptsArr = ld.points || [];
+    const rep = ptsArr.find(r=>r.name===name) || {};
+    const monthly = rep.monthlyPts || 0;
+    const allTime = parseInt(localStorage.getItem('pts_at_'+SHOP_NAME.replace(/\s/g,'_')+'_'+name.replace(/\s/g,'_'))||'0');
+    const TIERS_LOCAL = [
+      {pts:500,  reward:'$5 Gift Card'},
+      {pts:1000, reward:'$10 Gift Card'},
+      {pts:2500, reward:'$25 Gift Card'},
+      {pts:5000, reward:'$50 + Swag'},
+    ];
+    const unlocked = [...TIERS_LOCAL].reverse().find(t=>allTime>=t.pts);
+    const next     = TIERS_LOCAL.find(t=>allTime<t.pts);
+    const pct = next ? Math.min(Math.round(allTime/next.pts*100),100) : 100;
+    document.getElementById('pts-personal-content').innerHTML =
+      '<div style="text-align:center;padding:1.25rem 0">'
+      +'<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:4px">'+name.split(' ')[0]+' Points</div>'
+      +'<div style="font-family:Georgia,serif;font-size:3rem;color:var(--charcoal);line-height:1">'+monthly.toLocaleString()+'</div>'
+      +'<div style="font-size:12px;color:var(--gray);margin-bottom:1.25rem">this period</div>'
+      +(unlocked?'<div style="display:inline-block;background:#D4EDDA;color:#155724;font-size:12px;font-weight:600;padding:4px 14px;border-radius:20px;margin-bottom:1rem">✓ '+unlocked.reward+' unlocked!</div>':'')
+      +'</div>'
+      +'<div style="background:var(--cream);border-radius:12px;padding:1rem;margin-bottom:.5rem">'
+      +(next
+        ?'<div style="font-size:12px;color:var(--gray);margin-bottom:.5rem">Progress to '+next.reward+'</div>'
+         +'<div style="background:#E0DFD8;border-radius:4px;height:8px;overflow:hidden"><div style="background:#5B3F8A;height:100%;width:'+pct+'%;border-radius:4px;transition:width .8s"></div></div>'
+         +'<div style="font-size:11px;color:var(--gray);margin-top:.375rem">'+allTime.toLocaleString()+' / '+next.pts.toLocaleString()+' pts ('+pct+'%)</div>'
+        :'<div style="font-size:13px;font-weight:600;color:#5B3F8A">🏆 All tiers unlocked!</div>')
+      +'</div>';
+  }
+
+  function ptsLogout(){
+    document.getElementById('pts-pin-wall').style.display='block';
+    document.getElementById('pts-personal').classList.remove('visible');
+    document.getElementById('pts-pin-input').value='';
+    document.getElementById('pts-name-select').value='';
+  }
+
+  // Populate name dropdown when Points tab is clicked
+  const _origSwitchTab = window.switchTab || function(){};
+  window.switchTab = function(tab, btn){
+    _origSwitchTab(tab, btn);
+    if(tab==='points'){
+      const sel = document.getElementById('pts-name-select');
+      if(sel && sel.options.length <= 1){
+        const ld = window._lastLiveData || {};
+        (ld.txn||[]).forEach(r=>{
+          const opt=document.createElement('option');
+          opt.value=r.name; opt.textContent=r.name;
+          sel.appendChild(opt);
+        });
+      }
+      // Show the points board
+      document.querySelectorAll('.board').forEach(b=>b.style.display='none');
+      const ptsBd = document.getElementById('board-points');
+      if(ptsBd) ptsBd.style.display='block';
+    }
+  };
 
   function switchTab(tab,btn){
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
