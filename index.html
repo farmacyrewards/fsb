@@ -632,7 +632,12 @@
       <div class="no-data-sub">Upload a Treez export using the ⚙ gear icon above.</div>
     </div>
     <div class="data-state" id="data-state">
-      <div class="live-pill"><div class="live-dot"></div> Live</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap">
+  <div class="live-pill"><div class="live-dot"></div> Live</div>
+  <div id="date-range-pill" style="font-size:11px;color:var(--gray);background:var(--white);border:0.5px solid var(--border);padding:3px 10px;border-radius:20px;display:none">
+    📅 <span id="date-range-text"></span>
+  </div>
+</div>
       <div class="data-state" id="data-state">
     <div class="stats-grid">
       <div class="stat-card hi"><div class="stat-label">Transactions</div><div class="stat-val" id="stat-txn">—</div><div class="stat-sub">This period</div></div>
@@ -1310,7 +1315,7 @@
 
   function firstPlaceBanner(tab, data){
     if(!data || !data.length) return '';
-    const winner = data[0];
+    const winner = data[0]; // current leader, not final winner
     const prize = FIRST_PLACE_PRIZES[tab] || 'Prize TBD';
     const label = tab === 'ghf' ? 'Top GHF Seller' : 'Top Plus Seller';
     const brand = tab === 'ghf' ? 'Glass House Farms' : 'Plus Products';
@@ -1318,8 +1323,8 @@
     return '<div class="first-place-banner">'
       +'<div class="first-place-crown">👑</div>'
       +'<div class="first-place-text">'
-      +'<div class="first-place-eyebrow">Monthly ' + label + '</div>'
-      +'<div class="first-place-title">' + brand + ' Champion</div>'
+      +'<div class="first-place-eyebrow">🏁 ' + label + ' — In Progress</div>'
+      +'<div class="first-place-title">' + brand + ' Race</div>'
       +'<div class="first-place-prize">' + (prize === 'MANAGER PRIZE HERE' ? '<span class="prize-placeholder">Prize to be announced by manager</span>' : '🎁 ' + prize) + '</div>'
       +'<div class="first-place-winner">'
       +'<div class="first-place-winner-label">Current leader:</div>'
@@ -2104,6 +2109,16 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDraw
     var upEl = document.getElementById('banner-updated');
     if(upEl && data && data.updatedAt) {
       upEl.textContent = '● Updated ' + new Date(data.updatedAt).toLocaleString('en-US', {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+    }
+    // Show date range pill
+    if(data && data.updatedAt) {
+      var pillEl = document.getElementById('date-range-pill');
+      var textEl = document.getElementById('date-range-text');
+      if(pillEl && textEl) {
+        var uploadDate = new Date(data.updatedAt).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+        textEl.textContent = 'Last upload: ' + uploadDate;
+        pillEl.style.display = 'inline-flex';
+      }
     }
 
     // Render hub overview
