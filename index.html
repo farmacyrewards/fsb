@@ -611,95 +611,12 @@
 
         <!-- Roster tab -->
         <div class="mgr-tab-panel" id="mgr-panel-roster">
-          <!-- Stats -->
-  <div class="stats-bar">
-    <div class="stat-card"><div class="stat-val" id="stat-total">0</div><div class="stat-label">Total Reps</div></div>
-    <div class="stat-card"><div class="stat-val" id="stat-email">0</div><div class="stat-label">With Email</div></div>
-    <div class="stat-card"><div class="stat-val" id="stat-shop">Farmacy</div><div class="stat-label">Location</div></div>
-  </div>
-
-  <!-- Add rep -->
-  <div class="add-section">
-    <div class="add-header"><div class="add-header-title">➕ Add rep to roster</div></div>
-    <div class="add-body">
-      <div class="add-row">
-        <div class="field-wrap">
-          <label class="field-label">Full name</label>
-          <input class="field-input" type="text" id="new-name" placeholder="As shown on leaderboard" onkeydown="if(event.key==='Enter')addRep()">
+          <div id="roster-container">
+            <div style="padding:1rem;color:var(--gray);font-size:13px">Loading roster...</div>
+          </div>
         </div>
-        <div class="field-wrap">
-          <label class="field-label">Email address</label>
-          <input class="field-input" type="email" id="new-email" placeholder="rep@email.com" onkeydown="if(event.key==='Enter')addRep()">
-        </div>
-        <button class="add-btn" onclick="addRep()">Add rep</button>
-      </div>
-      <div class="add-error" id="add-error"></div>
     </div>
   </div>
-
-  <!-- Roster table -->
-  <div class="roster-card">
-    <div class="roster-header">
-      <div class="roster-header-title">Current roster</div>
-      <div class="roster-actions">
-        <button class="copy-btn" onclick="copyEmails()">📋 Copy all emails</button>
-        <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
-      </div>
-    </div>
-    <div id="roster-list">
-      <div class="roster-empty">No reps added yet. Add your first rep above.</div>
-    </div>
-  </div>
-
-  <hr class="section-divider">
-
-  <!-- Notification section -->
-  <div class="notify-section">
-    <div class="notify-header">
-      <div class="notify-header-title">⭐ Notify reps — new data uploaded</div>
-      <div class="notify-badge">Email all reps</div>
-    </div>
-    <div class="notify-body">
-      <div class="notify-preview">
-        <div class="notify-preview-subject">Preview — what reps will receive</div>
-        <strong>Subject:</strong> 🏆 Your Farmacy SB leaderboard just updated<br><br>
-        Hey [Rep Name],<br><br>
-        The <strong>Farmacy SB</strong> leaderboard has been updated with the latest data.<br><br>
-        👀 <strong>Your current rank: [#X of Y]</strong><br>
-        Check the leaderboard to see where you stand and how close you are to your next reward.<br><br>
-        <a href="https://farmacyrewards.github.io/fsb/leaderboard.html" style="color:#5B3F8A">👉 View the leaderboard →</a><br><br>
-        Keep pushing — rewards are waiting! 🎁<br><br>
-        — The Rewards Team
-      </div>
-
-      <div class="notify-service-note">
-        <strong>📧 Email service setup required</strong>
-        To send notifications, connect an email service below. Recommended: <strong>EmailJS</strong> (free, no backend needed) or <strong>SendGrid</strong> (free tier). Add your service credentials and uncomment the send function in the code.
-      </div>
-
-      <div style="margin-top:12px">
-        <label class="field-label" style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Custom message (optional)</label>
-        <input class="notify-input" type="text" id="custom-message" placeholder="e.g. 'Big push this week — gift cards on the line!'">
-      </div>
-
-      <button class="notify-btn" id="notify-btn" onclick="sendNotifications()">
-        📨 Send update to all reps (<span id="rep-count">0</span>)
-      </button>
-      <div class="notify-status" id="notify-status"></div>
-    </div>
-  </div>
-
-</div><!-- /main -->
-
-
-
-        </div>
-      </div>
-    </div>
-  </div>
-
-  
-
 
   <div id="panel-competitions">
     
@@ -2353,6 +2270,36 @@ function editPin(name){
   renderRoster();
 }
 function renderRoster(){
+  // Build roster HTML into container if not already built
+  const container = document.getElementById('roster-container');
+  if(container && !document.getElementById('roster-list')){
+    container.innerHTML = `
+      <div class="stats-bar">
+        <div class="stat-card"><div class="stat-val" id="stat-total">0</div><div class="stat-label">Total Reps</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-email">0</div><div class="stat-label">With Email</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-pin">0</div><div class="stat-label">With PIN</div></div>
+      </div>
+      <div class="add-form" id="add-form">
+        <div class="field-row">
+          <input class="field-input" type="text" id="new-name" placeholder="Rep name" maxlength="40">
+          <input class="field-input" type="email" id="new-email" placeholder="Email (optional)" maxlength="80">
+        </div>
+        <div id="add-error" style="font-size:12px;color:#EF4444;min-height:16px"></div>
+        <button class="add-btn" onclick="addRep()">+ Add rep</button>
+      </div>
+      <div id="roster-list" class="roster-list"></div>
+      <div style="display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap">
+        <button class="export-btn" onclick="exportRosterCSV()">⬇ Export CSV</button>
+        <button class="export-btn" onclick="copyEmails()">📋 Copy emails</button>
+      </div>
+      <div class="notif-section" style="margin-top:1.25rem">
+        <textarea class="notif-msg" id="custom-message" rows="2" placeholder="Optional message to reps..."></textarea>
+        <button class="notify-btn" id="notify-btn" onclick="sendNotifications()">
+          📨 Send update to all reps (<span id="rep-count">0</span>)
+        </button>
+        <div class="notify-status" id="notify-status"></div>
+      </div>`;
+  }
   const roster = getRoster();
   const listEl = document.getElementById('roster-list');
   document.getElementById('stat-total').textContent = roster.length;
