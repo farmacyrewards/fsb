@@ -172,33 +172,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="ham-nav-icon">&#127968;</div>
       <div class="ham-nav-text"><div class="ham-nav-label">Hub</div><div class="ham-nav-sub">Live overview &amp; stats</div></div>
     </a>
-    <a class="ham-nav-item" id="ham-leaderboard" href="leaderboard.html">
-      <div class="ham-nav-icon">&#127942;</div>
-      <div class="ham-nav-text"><div class="ham-nav-label">Leaderboard</div><div class="ham-nav-sub">Live team rankings</div></div>
-    </a>
-    <a class="ham-nav-item" id="ham-redeem" href="https://farmacyrewards.github.io/fsb/redeem.html">
-      <div class="ham-nav-icon">&#127873;</div>
-      <div class="ham-nav-text"><div class="ham-nav-label">Redeem Points</div><div class="ham-nav-sub">Submit a reward request</div></div>
-    </a>
     <a class="ham-nav-item" id="ham-myrep" href="myrep.html">
       <div class="ham-nav-icon">&#11088;</div>
-      <div class="ham-nav-text"><div class="ham-nav-label">My Rewards</div><div class="ham-nav-sub">Your personal stats &amp; progress</div></div>
+      <div class="ham-nav-text"><div class="ham-nav-label">My Rewards</div><div class="ham-nav-sub">Stats, points &amp; redeem rewards</div></div>
     </a>
     <div class="ham-divider"></div>
     <div class="ham-section-label">Manager</div>
     <a class="ham-nav-item mgr-item" id="ham-roster" href="roster.html">
       <div class="ham-nav-icon">&#128101;</div>
       <div class="ham-nav-text"><div class="ham-nav-label">Roster</div><div class="ham-nav-sub">Manage reps &amp; notifications</div></div>
-      <div class="ham-nav-badge">Lock</div>
-    </a>
-    <a class="ham-nav-item mgr-item" id="ham-dashboard" href="dashboard.html">
-      <div class="ham-nav-icon">&#128202;</div>
-      <div class="ham-nav-text"><div class="ham-nav-label">Dashboard</div><div class="ham-nav-sub">Performance reports</div></div>
-      <div class="ham-nav-badge">Lock</div>
-    </a>
-    <a class="ham-nav-item mgr-item" id="ham-portal" href="brand-portal.html">
-      <div class="ham-nav-icon">&#127807;</div>
-      <div class="ham-nav-text"><div class="ham-nav-label">Brand Portal</div><div class="ham-nav-sub">GHF &amp; Plus read-only view</div></div>
       <div class="ham-nav-badge">Lock</div>
     </a>
   </nav>
@@ -295,11 +277,58 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       </div>
     </div>
 
-    <!-- Redeem CTA -->
-    <div class="redeem-card">
-      <div class="redeem-title">Ready to redeem your points?</div>
-      <div class="redeem-sub">Earn 10 pts per GHF or Plus unit · $10 gift card at 1,000 pts</div>
-      <a class="redeem-btn" href="https://farmacyrewards.github.io/fsb/redeem.html">Redeem rewards →</a>
+
+    <!-- Rewards info banner -->
+    <div style="background:linear-gradient(135deg,#2D1B69,#5B3F8A);border-radius:14px;padding:1.25rem;margin-bottom:1rem">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:.5rem">⭐ Shop Rewards</div>
+      <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:.75rem">Earn gift cards for every GHF &amp; Plus unit you sell!</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <div style="font-size:11px;font-weight:600;background:rgba(255,255,255,0.1);color:#fff;padding:3px 10px;border-radius:10px">500 pts → $5</div>
+        <div style="font-size:11px;font-weight:600;background:rgba(255,255,255,0.1);color:#fff;padding:3px 10px;border-radius:10px">1,000 pts → $10</div>
+        <div style="font-size:11px;font-weight:600;background:rgba(255,255,255,0.1);color:#fff;padding:3px 10px;border-radius:10px">2,500 pts → $25</div>
+        <div style="font-size:11px;font-weight:600;background:rgba(255,255,255,0.15);color:#FFD700;padding:3px 10px;border-radius:10px">5,000 pts → $50 🏆</div>
+      </div>
+    </div>
+
+    <!-- Redeem form section -->
+    <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:1rem">
+      <div style="background:linear-gradient(135deg,#1C2433,#2A3347);padding:.875rem 1.25rem">
+        <div style="font-size:13px;font-weight:600;color:#fff">🎁 Redeem Your Points</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px">Submit a request · Manager fulfills within 5–7 days</div>
+      </div>
+
+      <!-- Success screen -->
+      <div id="redeem-success" style="display:none;padding:2rem;text-align:center">
+        <div style="font-size:40px;margin-bottom:.75rem">🎉</div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:.5rem">Request submitted!</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:1rem;line-height:1.5">Your manager has been notified and will fulfill your reward within 5–7 business days.</div>
+        <button onclick="resetRedeemForm()" style="font-size:13px;font-weight:600;color:var(--primary);background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:9px 20px;cursor:pointer;font-family:inherit">Submit another request</button>
+      </div>
+
+      <!-- Redeem form -->
+      <div id="redeem-form" style="padding:1.25rem">
+        <div style="margin-bottom:.875rem">
+          <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:4px">Your name</label>
+          <input type="text" id="redeem-name" placeholder="First Last" readonly style="width:100%;padding:9px 12px;font-size:14px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font-family:inherit;outline:none">
+        </div>
+        <div style="margin-bottom:.875rem">
+          <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:4px">Reward tier</label>
+          <select id="redeem-tier" style="width:100%;padding:9px 12px;font-size:14px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font-family:inherit;outline:none">
+            <option value="">— Select a reward —</option>
+            <option value="$5 Gift Card (500 pts)">$5 Gift Card (500 pts)</option>
+            <option value="$10 Gift Card (1,000 pts)">$10 Gift Card (1,000 pts)</option>
+            <option value="$25 Gift Card (2,500 pts)">$25 Gift Card (2,500 pts)</option>
+            <option value="$50 Gift Card + Swag (5,000 pts)">$50 Gift Card + Swag (5,000 pts)</option>
+          </select>
+        </div>
+        <div style="margin-bottom:1.25rem">
+          <label style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);display:block;margin-bottom:4px">Note (optional)</label>
+          <textarea id="redeem-note" rows="2" placeholder="e.g. preferred gift card type, any special instructions..." style="width:100%;padding:9px 12px;font-size:13px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text);font-family:inherit;outline:none;resize:none"></textarea>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:.875rem" id="redeem-pts-check"></div>
+        <button onclick="submitRedeemRequest()" style="width:100%;padding:12px;font-size:14px;font-weight:600;color:#fff;background:var(--primary);border:none;border-radius:10px;cursor:pointer;font-family:inherit">Submit redemption request</button>
+        <div id="redeem-msg" style="font-size:12px;margin-top:.5rem;min-height:16px;text-align:center"></div>
+      </div>
     </div>
 
     <div class="logout-wrap">
@@ -426,6 +455,7 @@ function showDashboard(name) {
   // Rank tag
   const rankLabel = rank === 1 ? '🥇 #1 on the leaderboard!' : rank > 0 ? '#'+rank+' on transactions' : 'Not yet ranked';
   document.getElementById('rep-rank-tag').textContent = rankLabel;
+  initRedeemForm(name);
 
   // KPIs
   document.getElementById('kpi-monthly-pts').textContent = monthly.toLocaleString();
@@ -527,6 +557,83 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDraw
     shopEl.textContent = sn;
   }
 })();
+</script>
+
+
+<script>
+// Pre-fill name from login
+function initRedeemForm(name) {
+  var nameEl = document.getElementById('redeem-name');
+  if(nameEl) nameEl.value = name;
+  // Show points check
+  updatePtsCheck();
+}
+
+function updatePtsCheck() {
+  var el = document.getElementById('redeem-pts-check');
+  var tier = document.getElementById('redeem-tier');
+  if(!el || !tier) return;
+  var allTime = parseInt(localStorage.getItem(AT_KEY(document.getElementById('redeem-name').value||''))||'0');
+  var needed = {
+    '$5 Gift Card (500 pts)': 500,
+    '$10 Gift Card (1,000 pts)': 1000,
+    '$25 Gift Card (2,500 pts)': 2500,
+    '$50 Gift Card + Swag (5,000 pts)': 5000
+  };
+  var req = needed[tier.value] || 0;
+  if(!tier.value) { el.textContent = 'Your all-time points: ' + allTime.toLocaleString(); return; }
+  if(allTime >= req) {
+    el.textContent = '✅ You have ' + allTime.toLocaleString() + ' pts — eligible for this reward!';
+    el.style.color = '#10B981';
+  } else {
+    el.textContent = '⚠ You have ' + allTime.toLocaleString() + ' pts — need ' + (req-allTime).toLocaleString() + ' more for this tier.';
+    el.style.color = '#F59E0B';
+  }
+}
+
+document.addEventListener('change', function(e) {
+  if(e.target.id === 'redeem-tier') updatePtsCheck();
+});
+
+function submitRedeemRequest() {
+  var name = (document.getElementById('redeem-name')||{value:''}).value.trim();
+  var tier = (document.getElementById('redeem-tier')||{value:''}).value;
+  var note = (document.getElementById('redeem-note')||{value:''}).value.trim();
+  var msg  = document.getElementById('redeem-msg');
+  if(!name || !tier) { if(msg) { msg.textContent='Please select a reward tier.'; msg.style.color='#EF4444'; } return; }
+  if(msg) { msg.textContent='Submitting...'; msg.style.color='#888'; }
+
+  var body = 'REWARDS REDEMPTION REQUEST\n\n'
+    + 'Rep: ' + name + '\n'
+    + 'Shop: ' + SHOP_NAME + '\n'
+    + 'Reward: ' + tier + '\n'
+    + (note ? 'Note: ' + note + '\n' : '')
+    + '\nSubmitted: ' + new Date().toLocaleString();
+
+  var mailtoLink = 'mailto:?subject=Rewards+Redemption+Request+-+' + encodeURIComponent(name)
+    + '&body=' + encodeURIComponent(body);
+  window.location.href = mailtoLink;
+
+  // Show success
+  setTimeout(function() {
+    document.getElementById('redeem-form').style.display = 'none';
+    document.getElementById('redeem-success').style.display = 'block';
+    if(msg) msg.textContent = '';
+  }, 800);
+}
+
+function resetRedeemForm() {
+  var form = document.getElementById('redeem-form');
+  var succ = document.getElementById('redeem-success');
+  if(form) form.style.display = 'block';
+  if(succ) succ.style.display = 'none';
+  var tier = document.getElementById('redeem-tier');
+  var note = document.getElementById('redeem-note');
+  if(tier) tier.value = '';
+  if(note) note.value = '';
+  var msg = document.getElementById('redeem-msg');
+  if(msg) msg.textContent = '';
+}
 </script>
 
 </body>

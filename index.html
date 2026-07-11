@@ -514,13 +514,9 @@
       <div class="ham-nav-icon">&#127968;</div>
       <div class="ham-nav-text"><div class="ham-nav-label">Hub</div><div class="ham-nav-sub">Live overview &amp; stats</div></div>
     </a>
-    <a class="ham-nav-item" id="ham-redeem" href="redeem.html">
-      <div class="ham-nav-icon">&#127873;</div>
-      <div class="ham-nav-text"><div class="ham-nav-label">Redeem Points</div><div class="ham-nav-sub">Submit a reward request</div></div>
-    </a>
     <a class="ham-nav-item" id="ham-myrep" href="myrep.html">
       <div class="ham-nav-icon">&#11088;</div>
-      <div class="ham-nav-text"><div class="ham-nav-label">My Rewards</div><div class="ham-nav-sub">Your personal stats &amp; progress</div></div>
+      <div class="ham-nav-text"><div class="ham-nav-label">My Rewards</div><div class="ham-nav-sub">Stats, points &amp; redeem</div></div>
     </a>
     <div class="ham-divider"></div>
     <div class="ham-section-label">Manager</div>
@@ -619,19 +615,7 @@
 
 
   <div id="panel-competitions">
-    <div class="reward-banner">
-    <div class="reward-icon-wrap">🎁</div>
-    <div class="reward-text">
-      <div class="reward-eyebrow">⭐ Shop Rewards</div>
-      <div class="reward-headline" id="reward-headline"></div>
-      <div class="reward-tiers">
-        <div class="reward-tier">500 pts → $5</div>
-        <div class="reward-tier">1,000 pts → $10</div>
-        <div class="reward-tier">2,500 pts → $25</div>
-        <div class="reward-tier top">5,000 pts → $50 🏆</div>
-      </div>
-    </div>
-  </div>
+    
 
   <!-- Tabs -->
   <div class="tabs">
@@ -860,7 +844,6 @@
 
   window.renderAll=function(liveData){
     renderTeamChallenge(liveData);
-    renderPointsBoard(liveData.points||[]);
     ['txn','sales','avg','ghf','plus'].forEach(tab=>{
       const c=TAB_CONFIG[tab];
       const data=liveData[tab];
@@ -1895,13 +1878,10 @@
 
   <!-- Quick links -->
   <div class="links-grid" style="margin-top:1.25rem">
-    <a class="link-card" href="https://farmacyrewards.github.io/fsb/redeem.html">
-      <div class="link-icon">🎁</div>
-      <div class="link-text"><div class="link-title">Redeem Points</div><div class="link-desc">Submit a reward request</div></div>
-    </a>
+
     <a class="link-card" href="https://farmacyrewards.github.io/fsb/myrep.html">
       <div class="link-icon">⭐</div>
-      <div class="link-text"><div class="link-title">My Rewards</div><div class="link-desc">Your personal stats</div></div>
+      <div class="link-text"><div class="link-title">My Rewards</div><div class="link-desc">Stats, points progress &amp; redeem</div></div>
     </a>
     <a class="link-card mgr-link" href="https://farmacyrewards.github.io/fsb/roster.html">
       <div class="link-icon">👥</div>
