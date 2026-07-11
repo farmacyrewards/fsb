@@ -977,6 +977,7 @@
   window.renderAll=function(liveData){
         renderTeamChallenge(liveData);
     ['txn','sales','avg','ghf','plus'].forEach(tab=>{
+      try{
       const c=TAB_CONFIG[tab];
       const data=liveData[tab];
       if(!data||!data.length){document.getElementById('board-'+tab).innerHTML='<div class="loading-bar">No data</div>';return;}
@@ -1018,6 +1019,7 @@
         +'<div class="card"><div class="thead '+tab+'">'
         +'<div style="text-align:center">#</div><div>Rep</div>'
         +'<div style="text-align:right">'+c.colHeader+'</div></div>'+rows+'</div>';
+      } catch(e){ console.error('renderAll error for tab',tab,':',e.message); document.getElementById('board-'+tab).innerHTML='<div style="color:red;padding:1rem">Error: '+e.message+'</div>'; }
     });
   };
 
