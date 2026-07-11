@@ -637,8 +637,8 @@
   <div class="tabs">
     <button class="tab active txn" onclick="switchTab('txn',this)"><span class="ti">🧾</span>Transactions</button>
     <button class="tab sales" onclick="switchTab('sales',this)"><span class="ti">💵</span>Net Sales</button>
-    <button class="tab avg" onclick="switchTab('avg',this)"><span class="ti">🛒</span>ATV <span style="font-size:9px;background:#FFD700;color:#5B3A00;padding:1px 5px;border-radius:6px;font-weight:700;vertical-align:middle">$100</span></button>
-    <button class="tab ghf" onclick="switchTab('ghf',this)"><span class="ti">🌲</span>GHF Units <span style="font-size:9px;background:#FFD700;color:#5B3A00;padding:1px 5px;border-radius:6px;font-weight:700;vertical-align:middle">$100</span></button>
+    <button class="tab avg" onclick="switchTab('avg',this)"><span class="ti">🛒</span>ATV<span style="font-size:9px;background:#FFD700;color:#5B3A00;padding:1px 6px;border-radius:6px;font-weight:700;display:block;margin-top:3px">$100</span></button>
+    <button class="tab ghf" onclick="switchTab('ghf',this)"><span class="ti">🌲</span>GHF Units<span style="font-size:9px;background:#FFD700;color:#5B3A00;padding:1px 6px;border-radius:6px;font-weight:700;display:block;margin-top:3px">$100</span></button>
     <button class="tab plus" onclick="switchTab('plus',this)"><span class="ti">🟪</span>Plus Units</button>
     <button class="tab points" onclick="switchTab('points',this)"><span class="ti">⭐</span>Points</button>
   </div>
@@ -648,7 +648,39 @@
   <div id="board-avg" style="display:none"></div>
   <div id="board-ghf" style="display:none"></div>
   <div id="board-plus" style="display:none"></div>
-  <div id="board-points" style="display:none"></div>
+  <div id="board-points" style="display:none">
+    <!-- PIN login wall — same style as myrep -->
+    <div style="background:var(--white);border:0.5px solid var(--border);border-radius:16px;padding:2rem 1.5rem;margin-top:.5rem;max-width:440px;margin-left:auto;margin-right:auto" id="pts-pin-wall">
+      <div style="font-size:16px;font-weight:600;color:var(--charcoal);margin-bottom:4px">Sign in to see your stats</div>
+      <div style="font-size:13px;color:#5B3F8A;margin-bottom:1.5rem;line-height:1.5">Select your name and enter the PIN your manager assigned you.</div>
+      <div style="margin-bottom:1rem">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:5px">Your name</div>
+        <select id="pts-name-select" style="width:100%;padding:10px 12px;font-size:14px;border:1.5px solid var(--border);border-radius:9px;background:var(--cream);color:var(--charcoal);font-family:inherit;outline:none">
+          <option value="">— Select your name —</option>
+        </select>
+      </div>
+      <div style="margin-bottom:1.25rem">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:5px">Your pin</div>
+        <input type="password" id="pts-pin-input" maxlength="6" placeholder="• • • •" inputmode="numeric"
+          style="width:100%;padding:10px 12px;font-size:20px;letter-spacing:8px;text-align:center;border:1.5px solid var(--border);border-radius:9px;background:var(--cream);color:var(--charcoal);font-family:monospace;outline:none"
+          onkeydown="if(event.key==='Enter')ptsLogin()">
+      </div>
+      <div id="pts-pin-error" style="font-size:12px;color:#EF4444;min-height:16px;margin-bottom:.5rem"></div>
+      <button onclick="ptsLogin()" style="width:100%;padding:13px;font-size:14px;font-weight:600;color:#fff;background:var(--navy);border:none;border-radius:10px;cursor:pointer;font-family:inherit">View my stats</button>
+      <div style="text-align:center;font-size:11px;color:var(--gray);margin-top:1.5rem">Farmacy SB · Rewards Program · Personal use only</div>
+    </div>
+    <!-- Personal view (shown after PIN) -->
+    <div id="pts-personal" style="display:none;margin-top:.5rem">
+      <div id="pts-personal-content"></div>
+      <a href="https://farmacyrewards.github.io/fsb/myrep.html"
+        style="display:block;width:100%;padding:12px;font-size:14px;font-weight:600;text-align:center;background:linear-gradient(135deg,#2D1B69,#5B3F8A);color:#fff;border-radius:12px;text-decoration:none;margin-top:1rem;box-sizing:border-box">
+        ⭐ Go to My Rewards — full stats &amp; redeem →
+      </a>
+      <div style="text-align:center;margin-top:.75rem">
+        <button onclick="ptsLogout()" style="font-size:11px;color:var(--gray);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit">Sign out</button>
+      </div>
+    </div>
+</div>
 
   <div class="footer" id="footer">Farmacy · Internal use only</div>
 </div>
@@ -1975,22 +2007,6 @@
 </body>
 </html>
     <div id="team-challenge-wrap"></div>
-
-  <!-- Quick links -->
-  <div class="links-grid" style="margin-top:1.25rem">
-
-    <a class="link-card" href="https://farmacyrewards.github.io/fsb/myrep.html">
-      <div class="link-icon">⭐</div>
-      <div class="link-text"><div class="link-title">My Rewards</div><div class="link-desc">Stats, points progress &amp; redeem</div></div>
-    </a>
-    <a class="link-card mgr-link" href="https://farmacyrewards.github.io/fsb/roster.html">
-      <div class="link-icon">👥</div>
-      <div class="link-text"><div class="link-title">Rep Roster</div><div class="link-desc">Manage reps &amp; notifications</div></div>
-      <div class="link-badge">Manager</div>
-    </a>
-  </div>
-
-  </div>
 
 </div>
 
