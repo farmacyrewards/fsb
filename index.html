@@ -1018,9 +1018,9 @@
           })()
           +'<div class="val">'+c.valFn(rep)+'</div></div>';
       }).join('');
-      document.getElementById('board-'+tab).innerHTML=
+      var _brd=document.getElementById('board-'+tab); console.log('Board',tab,'innerHTML len before:',_brd.innerHTML.length); _brd.innerHTML=
         (PRIZE_TABS.includes(tab) ? renderCampaignBanner(tab) : '') +
-        (PRIZE_TABS.includes(tab) ? firstPlaceBanner(tab,data) : '') +
+        (PRIZE_TABS.includes(tab) ? firstPlaceBanner(tab,data) : ''); console.log('Board',tab,'innerHTML len after:',_brd.innerHTML.length); void 0 +
         '<div class="metrics">'
         +'<div class="metric"><div class="metric-label">'+c.m1Label+'</div><div class="metric-val">'+c.m1Fn(data)+'</div></div>'
         +'<div class="metric"><div class="metric-label">'+c.m2Label+'</div><div class="metric-val">'+c.m2Fn(data)+'</div></div>'
