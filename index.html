@@ -708,6 +708,14 @@
     
 
   <!-- Tabs -->
+  
+  <!-- Debug banner - remove after fixing -->
+  <div id="debug-bar" style="background:#1a1a2e;color:#00ff88;font-family:monospace;font-size:11px;padding:6px 12px;margin-bottom:.5rem;border-radius:8px;line-height:1.6">
+    <div id="dbg-firebase">⏳ Firebase: connecting...</div>
+    <div id="dbg-data">📊 Data: waiting...</div>
+    <div id="dbg-render">🎨 Render: waiting...</div>
+  </div>
+
   <div class="tabs">
     <button class="tab active txn" onclick="switchTab('txn',this)"><span class="ti">🧾</span>Transactions</button>
     <button class="tab sales" onclick="switchTab('sales',this)"><span class="ti">💵</span>Net Sales</button>
@@ -976,6 +984,8 @@
   };
 
   window.renderAll=function(liveData){
+    var dbgD = document.getElementById('dbg-data');
+    if(dbgD) dbgD.textContent = '📊 Data: txn=' + (liveData.txn||[]).length + ' ghf=' + (liveData.ghf||[]).length + ' pts=' + (liveData.points||[]).length;
     renderTeamChallenge(liveData);
     ['txn','sales','avg','ghf','plus'].forEach(tab=>{
       const c=TAB_CONFIG[tab];
@@ -2136,6 +2146,8 @@
     const data = snap.val();
     const liveData = data.liveData || {};
     console.log('[Firebase] data received, keys:', Object.keys(liveData));
+    var dbgFb = document.getElementById('dbg-firebase');
+    if(dbgFb) dbgFb.textContent = '✅ Firebase: connected — keys: ' + Object.keys(liveData).join(', ');
     window._lastLiveData = liveData;
     window._lastFirebaseData = data;
 
@@ -2160,7 +2172,13 @@
 
     // Render leaderboard tabs
     if(typeof window.renderAll === 'function') {
+      var dbgR = document.getElementById('dbg-render');
+      if(dbgR) dbgR.textContent = '🎨 Render: calling renderAll...';
       window.renderAll(liveData);
+      if(dbgR) dbgR.textContent = '✅ Render: renderAll complete';
+    } else {
+      var dbgR = document.getElementById('dbg-render');
+      if(dbgR) dbgR.textContent = '❌ Render: window.renderAll NOT defined!';
     }
 
     // Archive removed
