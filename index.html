@@ -984,7 +984,7 @@
 
   window.renderAll=function(liveData){
     renderTeamChallenge(liveData);
-    ['txn','sales','avg','ghf','plus','points'].forEach(tab=>{
+    ['txn','sales','avg','ghf','plus'].forEach(tab=>{
       const c=TAB_CONFIG[tab];
       const data=liveData[tab];
       if(!data||!data.length){document.getElementById('board-'+tab).innerHTML='<div class="loading-bar">No data</div>';return;}
@@ -1920,7 +1920,7 @@
   function switchTab(tab,btn){
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
     btn.classList.add('active');
-    ['txn','sales','avg','ghf','plus','points'].forEach(t=>{
+    ['txn','sales','avg','ghf','plus'].forEach(t=>{
       document.getElementById('board-'+t).style.display=t===tab?'block':'none';
     });
   }
@@ -2141,6 +2141,7 @@
     }
     const data = snap.val();
     const liveData = data.liveData || {};
+    console.log('[Firebase] data received, keys:', Object.keys(liveData));
     window._lastLiveData = liveData;
     window._lastFirebaseData = data;
 
