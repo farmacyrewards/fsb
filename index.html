@@ -1044,79 +1044,20 @@
   function addToAllTime(name, pts){ localStorage.setItem(getAllTimeKey(name), String(getAllTime(name)+pts)); }
 
   function renderPointsBoard(reps){
-    if(!reps||!reps.length){
-      document.getElementById('board-points').innerHTML='<div class="loading-bar">Upload data to see points</div>';
-      return;
+    // Store points data globally — rendered via showPtsPersonal after PIN login
+    window._pointsData = reps || [];
+    // Repopulate name dropdown if Points tab is active
+    const sel = document.getElementById('pts-name-select');
+    if(sel && sel.options.length <= 1 && reps && reps.length){
+      reps.forEach(r=>{
+        const opt = document.createElement('option');
+        opt.value = r.name; opt.textContent = r.name;
+        sel.appendChild(opt);
+      });
     }
-
-    // Add all-time pts to each rep
-    const withAllTime = reps.map(r=>({ ...r, allTime: getAllTime(r.name) }));
-    // Sort by monthly pts
-    const sorted = [...withAllTime].sort((a,b)=>b.monthlyPts-a.monthlyPts);
-
-    const totalMonthly = sorted.reduce((s,r)=>s+r.monthlyPts,0);
-    const topRep = sorted[0];
-
-    // Team summary
-    const teamHtml =
-      '<div class="points-hero">'
-      +'<div class="points-hero-label">Shop Points — This Month</div>'
-      +'<div class="points-total">'+totalMonthly.toLocaleString()+'</div>'
-      +'<div class="points-sub">Total points earned by the team</div>'
-      +'<div class="points-split">'
-      +'<div class="points-pill"><div class="points-pill-val">'+topRep.monthlyPts.toLocaleString()+'</div><div class="points-pill-label">Top: '+topRep.name.split(' ')[0]+'</div></div>'
-      +'<div class="points-pill"><div class="points-pill-val">'+Math.round(totalMonthly/sorted.length).toLocaleString()+'</div><div class="points-pill-label">Team avg</div></div>'
-      +'</div></div>';
-
-    // How to earn
-    const earnHtml =
-      '<div class="earn-card">'
-      +'<div class="earn-header">How to earn points</div>'
-      +'<div class="earn-row"><span class="earn-icon">🌲</span><span class="earn-desc">Per GHF unit sold</span><span class="earn-pts">10 pts</span></div>'
-      +'<div class="earn-row"><span class="earn-icon">🟪</span><span class="earn-desc">Per Plus unit sold</span><span class="earn-pts">10 pts</span></div>'
-      +'<div class="earn-row"><span class="earn-icon">💵</span><span class="earn-desc">Net sales</span><span class="earn-pts" style="color:#9CA3AF">0 pts</span></div>'
-      +'</div>';
-
-    // Redemption tiers (based on top rep's all-time points for demo)
-    const demoAllTime = topRep.allTime || topRep.monthlyPts;
-    const tierHtml = '<div class="redeem-card">'
-      +'<div class="redeem-header">Redemption tiers — All-time points</div>'
-      + TIERS.map(tier=>{
-          const pct = Math.min(Math.round(demoAllTime/tier.pts*100),100);
-          const unlocked = demoAllTime >= tier.pts;
-          return '<div class="tier-row'+(unlocked?' unlocked':'')+'"><div class="tier-badge">'+tier.emoji+'</div>'
-            +'<div class="tier-info"><div class="tier-reward">'+tier.reward+'</div>'
-            +'<div class="tier-pts-needed">'+tier.pts.toLocaleString()+' points</div>'
-            +'<div class="tier-progress"><div class="tier-bar-bg"><div class="tier-bar-fill" style="width:'+pct+'%"></div></div>'
-            +'<div class="tier-pct">'+pct+'% there</div></div></div>'
-            +(unlocked?'<div class="tier-unlocked-badge">✓ Unlocked</div>':'')
-            +'</div>';
-        }).join('')
-      +'</div>';
-
-    // Rep leaderboard
-    const repRows = sorted.map((rep,i)=>{
-      const color=COLORS[i%COLORS.length];
-      return '<div class="pts-row'+(i===0?' hl':'')+'"><div class="rank">'+rl(i)+'</div>'
-        +'<div class="rep-info"><div class="avatar" style="background:'+color+'22;color:'+color+'">'+ini(rep.name)+'</div>'
-        +'<div class="rep-name">'+rep.name+'</div></div>'
-        +'<div class="pts-val">'+rep.monthlyPts.toLocaleString()+'</div>'
-        +'<div class="pts-monthly">'+rep.allTime.toLocaleString()+'</div>'
-        +'</div>';
-    }).join('');
-
-    const lbHtml = '<div class="points-leaderboard">'
-      +'<div class="pts-head"><div style="text-align:center">#</div><div>Rep</div><div style="text-align:right">This Month</div><div style="text-align:right">All-Time</div></div>'
-      +repRows+'</div>';
-
-    document.getElementById('board-points').innerHTML =
-      '<div class="perennial-badge">⭐ Shop Rewards</div>'
-      +teamHtml+earnHtml+tierHtml+lbHtml;
   }
 
-
-  // ── Export functions ──────────────────────────────────────────
-
+  
   function getExportData(){
     if(!liveData) return null;
     const txn  = liveData.txn  || [];
@@ -1919,8 +1860,7 @@
     const personal = document.getElementById('pts-personal');
     personal.classList.add('visible');
     // Build personal points view
-    const ld = window._lastLiveData || {};
-    const ptsArr = ld.points || [];
+    const ptsArr = window._pointsData || (window._lastLiveData||{}).points || [];
     const rep = ptsArr.find(r=>r.name===name) || {};
     const monthly = rep.monthlyPts || 0;
     const allTime = parseInt(localStorage.getItem('pts_at_'+SHOP_NAME.replace(/\s/g,'_')+'_'+name.replace(/\s/g,'_'))||'0');
@@ -1963,8 +1903,8 @@
     if(tab==='points'){
       const sel = document.getElementById('pts-name-select');
       if(sel && sel.options.length <= 1){
-        const ld = window._lastLiveData || {};
-        (ld.txn||[]).forEach(r=>{
+        const repsArr = window._pointsData || (window._lastLiveData||{}).points || (window._lastLiveData||{}).txn || [];
+        repsArr.forEach(r=>{
           const opt=document.createElement('option');
           opt.value=r.name; opt.textContent=r.name;
           sel.appendChild(opt);
