@@ -1902,33 +1902,25 @@
     document.getElementById('pts-name-select').value='';
   }
 
-  // Populate name dropdown when Points tab is clicked
-  const _origSwitchTab = window.switchTab || function(){};
-  window.switchTab = function(tab, btn){
-    _origSwitchTab(tab, btn);
-    if(tab==='points'){
-      const sel = document.getElementById('pts-name-select');
-      if(sel && sel.options.length <= 1){
-        const repsArr = window._pointsData || (window._lastLiveData||{}).points || (window._lastLiveData||{}).txn || [];
-        repsArr.forEach(r=>{
-          const opt=document.createElement('option');
-          opt.value=r.name; opt.textContent=r.name;
-          sel.appendChild(opt);
-        });
-      }
-      // Show the points board
-      document.querySelectorAll('.board').forEach(b=>b.style.display='none');
-      const ptsBd = document.getElementById('board-points');
-      if(ptsBd) ptsBd.style.display='block';
-    }
-  };
-
   function switchTab(tab,btn){
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
     btn.classList.add('active');
-    ['txn','sales','avg','ghf','plus'].forEach(t=>{
-      document.getElementById('board-'+t).style.display=t===tab?'block':'none';
+    ['txn','sales','avg','ghf','plus','points'].forEach(t=>{
+      var el = document.getElementById('board-'+t);
+      if(el) el.style.display = t===tab ? 'block' : 'none';
     });
+    // Populate name dropdown when Points tab clicked
+    if(tab==='points'){
+      var sel = document.getElementById('pts-name-select');
+      if(sel && sel.options.length <= 1){
+        var repsArr = window._pointsData || ((window._lastLiveData||{}).points) || ((window._lastLiveData||{}).txn) || [];
+        repsArr.forEach(function(r){
+          var opt = document.createElement('option');
+          opt.value = r.name; opt.textContent = r.name;
+          sel.appendChild(opt);
+        });
+      }
+    }
   }
 
   function handleFile(file){
