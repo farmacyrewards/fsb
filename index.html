@@ -1927,6 +1927,8 @@
         // Update streak data for all reps
         const top5Names = liveData.txn.slice(0,5).map(r=>r.name);
         updateStreaks(reps, top5Names);
+        // Archive current data before overwriting if it's from a different month
+        await window.archiveIfNeeded();
         const saved=await window.saveToFirebase({liveData, updatedAt}).then(function(ok){
           (document.getElementById('sync-status')||{}).textContent = ok
             ? '✅ Synced — all devices now show updated data'
@@ -2117,6 +2119,77 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDraw
 
   window.loadFromFirebase = async function() {
     // noop — using onValue above
+  };
+
+  // ── Monthly archive ────────────────────────────────────────────
+  // Before each upload, snapshot the current Firebase data into
+  // archive/{YYYY_MM} so no period's data is ever lost
+  window.archiveIfNeeded = async function() {
+    try {
+      const snap = await get(ref(db, 'leaderboard'));
+      if(!snap.exists()) return; // nothing to archive
+      const data = snap.val();
+      if(!data.updatedAt) return;
+
+      // Parse the month of existing data
+      const existingDate  = new Date(data.updatedAt);
+      const existingMonth = existingDate.getFullYear() + '_' +
+                            String(existingDate.getMonth()+1).padStart(2,'0');
+
+      // Check if already archived this month
+      const alreadySnap = await get(ref(db, 'archive/' + existingMonth));
+      if(alreadySnap.exists()) return; // already archived
+
+      // Get top winners for the archive summary
+      const ld      = data.liveData || {};
+      const txnArr  = ld.txn   || [];
+      const ghfArr  = ld.ghf   || [];
+      const pluArr  = ld.plus  || [];
+      const salArr  = ld.sales || [];
+      const ptsArr  = ld.points|| [];
+
+      const totTxn  = txnArr.reduce((s,r)=>s+(r.txn||0),0);
+      const totSal  = salArr.reduce((s,r)=>s+(r.sales||0),0);
+      const totGhf  = ghfArr.reduce((s,r)=>s+(r.units||r.ghf||0),0);
+      const totPlus = pluArr.reduce((s,r)=>s+(r.units||r.plus||0),0);
+      const totPts  = ptsArr.reduce((s,r)=>s+(r.monthlyPts||0),0);
+
+      const monthLabel = existingDate.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+
+      const archiveEntry = {
+        month:      existingMonth,
+        monthLabel: monthLabel,
+        archivedAt: new Date().toISOString(),
+        totals: {
+          transactions: totTxn,
+          netSales:     Math.round(totSal),
+          ghfUnits:     totGhf,
+          plusUnits:    totPlus,
+          points:       totPts,
+          reps:         txnArr.length,
+        },
+        winners: {
+          topTxn:   txnArr[0]?.name  || '—',
+          topGhf:   ghfArr[0]?.name  || '—',
+          topPlus:  pluArr[0]?.name  || '—',
+          topPts:   ptsArr[0]?.name  || '—',
+        },
+        reps: txnArr.map(r => ({
+          name:  r.name,
+          txn:   r.txn||0,
+          sales: (salArr.find(x=>x.name===r.name)||{}).sales||0,
+          ghf:   (ghfArr.find(x=>x.name===r.name)||{}).units||0,
+          plus:  (pluArr.find(x=>x.name===r.name)||{}).units||0,
+          pts:   (ptsArr.find(x=>x.name===r.name)||{}).monthlyPts||0,
+        })),
+      };
+
+      await set(ref(db, 'archive/' + existingMonth), archiveEntry);
+      console.log('Archived:', monthLabel);
+    } catch(e) {
+      console.warn('Archive failed (non-critical):', e.message);
+      // Non-fatal — continue with upload even if archive fails
+    }
   };
   window.saveToFirebase = async function(payload) {
     try {
