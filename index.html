@@ -696,13 +696,6 @@
 
 
 
-<script>
-</script>
-
-
-
-</body>
-</html
         </div>
       </div>
     </div>
@@ -1836,15 +1829,18 @@
 
 
   // ── Points tab PIN login ───────────────────────────────────────
-  function ptsLogin(){
+  async function ptsLogin(){
     const name = document.getElementById('pts-name-select').value;
     const pin  = document.getElementById('pts-pin-input').value.trim();
     const err  = document.getElementById('pts-pin-error');
     if(!name){ err.textContent='Select your name.'; return; }
     if(!pin)  { err.textContent='Enter your PIN.'; return; }
-    const savedPin = localStorage.getItem('rep_pin_' + SHOP_NAME.replace(/\s/g,'_') + '_' + name.replace(/\s/g,'_'));
+    err.textContent='Checking...';
+    // Try Firebase first, fall back to localStorage
+    let savedPin = await getPinFirebase(name);
+    if(!savedPin) savedPin = getPin(name); // localStorage fallback
     if(!savedPin){ err.textContent='No PIN set. Ask your manager.'; return; }
-    if(pin !== savedPin){
+    if(pin !== String(savedPin)){
       err.textContent='Incorrect PIN.';
       const inp = document.getElementById('pts-pin-input');
       inp.classList.add('err'); inp.value='';
@@ -2043,8 +2039,6 @@
 
 
 
-</body>
-</html>
     <div id="team-challenge-wrap"></div>
 
 </div>
@@ -2341,9 +2335,23 @@ function deleteRep(name){
   renderRoster();
 }
 
-function getPinKey(name){ return 'rep_pin_' + SHOP_NAME.replace(/\s/g,'_') + '_' + name.replace(/\s/g,'_'); }
-function getPin(name){ return localStorage.getItem(getPinKey(name)) || ''; }
-function setPin(name, pin){ localStorage.setItem(getPinKey(name), pin); }
+function getPinKey(name){ return name.replace(/[^a-zA-Z0-9]/g,'_'); }
+function getPin(name){ return localStorage.getItem('rep_pin_'+SHOP_NAME.replace(/\s/g,'_')+'_'+name.replace(/\s/g,'_')) || ''; } // fallback localStorage
+async function getPinFirebase(name){
+  try {
+    const {get, ref} = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    const snap = await get(ref(window.db, 'pins/' + SHOP_NAME.replace(/\s/g,'_') + '/' + getPinKey(name)));
+    return snap.exists() ? String(snap.val()) : null;
+  } catch(e){ return null; }
+}
+async function setPin(name, pin){
+  // Save to both Firebase and localStorage for backward compatibility
+  localStorage.setItem('rep_pin_'+SHOP_NAME.replace(/\s/g,'_')+'_'+name.replace(/\s/g,'_'), pin);
+  try {
+    const {set, ref} = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+    await set(ref(window.db, 'pins/' + SHOP_NAME.replace(/\s/g,'_') + '/' + getPinKey(name)), pin);
+  } catch(e){ console.warn('PIN Firebase save failed:', e.message); }
+}
 function editPin(name){
   const existing = getPin(name);
   const pin = prompt('Set a 4-6 digit PIN for ' + name + ':' + (existing ? ' (current: '+existing+')' : ''), existing || '');
