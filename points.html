@@ -62,6 +62,7 @@
   .action-link-title{font-size:13px;font-weight:600;color:var(--charcoal)}
   .action-link-sub{font-size:11px;color:var(--gray)}
   .sign-out{text-align:center;margin-top:.75rem}
+  textarea.field-input{font-family:inherit}
   .sign-out button{font-size:12px;color:var(--gray);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:inherit}
 </style>
 </head>
@@ -131,16 +132,45 @@
         <div id="tier-list"></div>
       </div>
     </div>
-    <div class="action-links">
-      <a href="myrep.html" class="action-link">
-        <div class="action-link-icon">🎁</div>
-        <div><div class="action-link-title">Redeem</div><div class="action-link-sub">Submit a request</div></div>
-      </a>
-      <a href="index.html" class="action-link">
-        <div class="action-link-icon">🏆</div>
-        <div><div class="action-link-title">Leaderboard</div><div class="action-link-sub">Team rankings</div></div>
-      </a>
+    <!-- Redeem section -->
+    <div id="redeem-section" class="pin-card" style="margin-bottom:1rem">
+      <div style="font-size:15px;font-weight:600;color:var(--charcoal);margin-bottom:4px">🎁 Redeem a Reward</div>
+      <div style="font-size:12px;color:var(--gray);margin-bottom:1.25rem">Select a tier you've unlocked and submit your request.</div>
+      <div class="field-group">
+        <div class="field-label">Select reward</div>
+        <select class="field-input" id="redeem-tier">
+          <option value="">— Choose a reward —</option>
+          <option value="$5 Gift Card (500 pts)">🎁 $5 Gift Card — 500 pts</option>
+          <option value="$10 Gift Card (1,000 pts)">🎁 $10 Gift Card — 1,000 pts</option>
+          <option value="$25 Gift Card (2,500 pts)">💳 $25 Gift Card — 2,500 pts</option>
+          <option value="$50 Gift Card + Swag (5,000 pts)">🏆 $50 Gift Card + Swag — 5,000 pts</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Note (optional)</div>
+        <textarea class="field-input" id="redeem-note" rows="2" placeholder="Any preferences or special instructions..." style="resize:none;font-size:13px;padding:10px 12px"></textarea>
+      </div>
+      <div id="redeem-error" style="font-size:12px;color:#EF4444;min-height:14px;margin-bottom:.5rem"></div>
+      <button class="btn-primary" onclick="submitRedeem()">Submit redemption request</button>
     </div>
+
+    <!-- Confirmation screen (hidden until submitted) -->
+    <div id="redeem-confirm" style="display:none" class="pin-card">
+      <div style="text-align:center;padding:.5rem 0">
+        <div style="font-size:40px;margin-bottom:.75rem">🎉</div>
+        <div style="font-size:16px;font-weight:600;color:var(--charcoal);margin-bottom:.5rem">Request submitted!</div>
+        <div style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:1.25rem" id="confirm-detail"></div>
+        <div style="background:var(--cream);border-radius:10px;padding:1rem;font-size:12px;color:var(--gray);margin-bottom:1.25rem">
+          Your manager has been notified and will fulfill your reward within <strong>5–7 business days</strong>.
+        </div>
+        <button onclick="resetRedeem()" style="font-size:13px;color:var(--gray);background:none;border:1px solid var(--border);border-radius:9px;padding:9px 20px;cursor:pointer;font-family:inherit">Submit another request</button>
+      </div>
+    </div>
+
+    <a href="index.html" class="action-link" style="margin-bottom:1rem">
+      <div class="action-link-icon">🏆</div>
+      <div><div class="action-link-title">Current Competitions</div><div class="action-link-sub">Team rankings</div></div>
+    </a>
     <div class="sign-out"><button onclick="ptsSignOut()">Sign out</button></div>
   </div>
 
@@ -266,6 +296,55 @@
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape'){ document.getElementById('menu-overlay').style.display='none'; document.getElementById('menu-drawer').style.display='none'; }
   });
+
+  // ── Redemption ────────────────────────────────────────────────
+  window.submitRedeem = async function(){
+    const tier  = document.getElementById('redeem-tier').value;
+    const note  = document.getElementById('redeem-note').value.trim();
+    const errEl = document.getElementById('redeem-error');
+    const name  = document.getElementById('pts-name').value;
+    if(!tier){ errEl.textContent = 'Please select a reward tier.'; return; }
+
+    // Check points eligibility
+    const tierPts = {'$5 Gift Card (500 pts)':500,'$10 Gift Card (1,000 pts)':1000,'$25 Gift Card (2,500 pts)':2500,'$50 Gift Card + Swag (5,000 pts)':5000};
+    const needed = tierPts[tier] || 0;
+    const current = parseInt(document.getElementById('personal-pts').textContent.replace(/,/g,'')) || 0;
+    if(current < needed){
+      errEl.textContent = 'You need ' + needed.toLocaleString() + ' pts for this reward. You have ' + current.toLocaleString() + ' pts.';
+      return;
+    }
+
+    errEl.textContent = '';
+
+    // Save request to Firebase
+    try {
+      const {push, ref: dbRef, serverTimestamp} = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
+      await push(dbRef(db, 'redemptions'), {
+        rep:       name,
+        shop:      'Farmacy SB',
+        tier:      tier,
+        note:      note || '',
+        pts:       current,
+        status:    'pending',
+        submitted: new Date().toISOString(),
+      });
+    } catch(e){ console.warn('Firebase save failed, continuing:', e); }
+
+    // Show confirmation
+    document.getElementById('redeem-section').style.display = 'none';
+    document.getElementById('redeem-confirm').style.display  = 'block';
+    document.getElementById('confirm-detail').innerHTML =
+      '<strong>' + name + '</strong> requested a <strong>' + tier + '</strong>'
+      + (note ? '<br><em>"' + note + '"</em>' : '');
+  };
+
+  window.resetRedeem = function(){
+    document.getElementById('redeem-section').style.display = 'block';
+    document.getElementById('redeem-confirm').style.display  = 'none';
+    document.getElementById('redeem-tier').value = '';
+    document.getElementById('redeem-note').value = '';
+    document.getElementById('redeem-error').textContent = '';
+  };
 
   // Load names on page load
   loadNames();
