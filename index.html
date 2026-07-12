@@ -773,16 +773,102 @@
 
   function renderPointsBoard(reps){ window._pointsData = reps || []; }
 
+  // ── Rendering helpers ───────────────────────────────────────────
+  const rl=i=>i===0?'🥇':i===1?'🥈':i===2?'🥉':String(i+1);
+  const fmt$=v=>'$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtK=v=>v>=1000?'$'+(v/1000).toFixed(1)+'K':fmt$(v);
+  const RENDER_COLORS=['#3B82F6','#10B981','#8B5CF6','#F59E0B','#EC4899','#14B8A6'];
+  const renderIni = n=>n.split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,2);
+
+  const TAB_CONFIG={
+    txn:{colHeader:'Transactions',podSub:'transactions',
+      valFn:r=>r.txn.toLocaleString(),
+      m1Label:'Total Transactions',m1Fn:arr=>arr.reduce((s,r)=>s+r.txn,0).toLocaleString(),
+      m2Label:'Team Avg',m2Fn:arr=>Math.round(arr.reduce((s,r)=>s+r.txn,0)/arr.length).toLocaleString(),
+      m3Label:'Reps',m3Fn:arr=>arr.length},
+    sales:{colHeader:'Net Sales',podSub:'net sales',
+      valFn:r=>fmtK(r.sales),
+      m1Label:'Total Net Sales',m1Fn:arr=>fmtK(arr.reduce((s,r)=>s+r.sales,0)),
+      m2Label:'Team Avg',m2Fn:arr=>fmtK(arr.reduce((s,r)=>s+r.sales,0)/arr.length),
+      m3Label:'Top Rep',m3Fn:arr=>arr[0]?.name.split(' ')[0]||'—'},
+    avg:{colHeader:'ATV',podSub:'avg transaction',
+      valFn:r=>fmt$(r.avg),
+      m1Label:'Highest Avg',m1Fn:arr=>fmt$(arr[0]?.avg||0),
+      m2Label:'Team Avg',m2Fn:arr=>fmt$(arr.reduce((s,r)=>s+r.avg,0)/arr.length),
+      m3Label:'Lowest Avg',m3Fn:arr=>fmt$(arr[arr.length-1]?.avg||0)},
+    ghf:{colHeader:'Units Sold',podSub:'units sold',
+      valFn:r=>(r.units||r.ghf||0).toLocaleString(),
+      m1Label:'Total GHF Units',m1Fn:arr=>arr.reduce((s,r)=>s+(r.units||r.ghf||0),0).toLocaleString(),
+      m2Label:'Team Avg',m2Fn:arr=>Math.round(arr.reduce((s,r)=>s+(r.units||r.ghf||0),0)/arr.length).toLocaleString(),
+      m3Label:'Top Seller',m3Fn:arr=>arr[0]?.name.split(' ')[0]||'—'},
+    plus:{colHeader:'Units Sold',podSub:'units sold',
+      valFn:r=>(r.units||r.plus||0).toLocaleString(),
+      m1Label:'Total Plus Units',m1Fn:arr=>arr.reduce((s,r)=>s+(r.units||r.plus||0),0).toLocaleString(),
+      m2Label:'Team Avg',m2Fn:arr=>Math.round(arr.reduce((s,r)=>s+(r.units||r.plus||0),0)/arr.length).toLocaleString(),
+      m3Label:'Top Seller',m3Fn:arr=>arr[0]?.name.split(' ')[0]||'—'},
+  };
+
+  window.renderAll=function(data){
+    lastLiveData = data;
+    window._lastLiveData = data;
+    renderTeamChallenge(data);
+    renderPointsBoard(data.points||[]);
+    ['txn','sales','avg','ghf','plus'].forEach(tab=>{
+      const c=TAB_CONFIG[tab];
+      const rows_=data[tab];
+      if(!rows_||!rows_.length){document.getElementById('board-'+tab).innerHTML='<div class="loading-bar">No data</div>';return;}
+      const [p2,p1,p3]=[rows_[1],rows_[0],rows_[2]];
+      const podium=[p2,p1,p3].map((r,i)=>{
+        if(!r) return '<div></div>';
+        return '<div class="podium-card'+(i===1?' p1 '+tab:'')+'">'
+          +'<div class="podium-emoji">'+(i===1?'🥇':i===0?'🥈':'🥉')+'</div>'
+          +'<div class="podium-name">'+r.name+'</div>'
+          +'<div class="podium-val">'+c.valFn(r)+'</div>'
+          +'<div class="podium-sub">'+c.podSub+'</div></div>';
+      }).join('');
+      const listRows=rows_.map((rep,i)=>{
+        const color=RENDER_COLORS[i%RENDER_COLORS.length];
+        let nameCell;
+        if(tab==='ghf'||tab==='plus'){
+          const fs=getStreak(STREAK_KEY_FIRE(rep.name));
+          const rs=getStreak(STREAK_KEY_RANK(rep.name));
+          nameCell='<div class="rep-name">'+rep.name
+            +(fs>=2?'<span class="streak-badge fire" style="font-size:9px;padding:1px 6px">'+fireStreakEmoji(fs)+' '+fs+'mo</span>':'')
+            +(rs>=2?'<span class="streak-badge rank" style="font-size:9px;padding:1px 6px">⭐'+rs+'</span>':'')
+            +'</div>';
+        } else {
+          nameCell='<div class="rep-name">'+rep.name+'</div>';
+        }
+        return '<div class="rep-row'+(i===0?' hl':'')+'">'
+          +'<div class="rank">'+rl(i)+'</div>'
+          +'<div class="rep-info"><div class="avatar" style="background:'+color+'22;color:'+color+'">'+renderIni(rep.name)+'</div>'+nameCell+'</div>'
+          +'<div class="val">'+c.valFn(rep)+'</div></div>';
+      }).join('');
+      document.getElementById('board-'+tab).innerHTML=
+        ((tab==='ghf'||tab==='plus') ? renderCampaignBanner(tab) : '') +
+        (PRIZE_TABS.includes(tab) ? firstPlaceBanner(tab,rows_) : '') +
+        '<div class="metrics">'
+        +'<div class="metric"><div class="metric-label">'+c.m1Label+'</div><div class="metric-val">'+c.m1Fn(rows_)+'</div></div>'
+        +'<div class="metric"><div class="metric-label">'+c.m2Label+'</div><div class="metric-val">'+c.m2Fn(rows_)+'</div></div>'
+        +'<div class="metric"><div class="metric-label">'+c.m3Label+'</div><div class="metric-val">'+c.m3Fn(rows_)+'</div></div>'
+        +'</div><div class="podium">'+podium+'</div>'
+        +'<div class="card"><div class="thead '+tab+'">'
+        +'<div style="text-align:center">#</div><div>Rep</div>'
+        +'<div style="text-align:right">'+c.colHeader+'</div></div>'+listRows+'</div>'
+        +(tab==='txn' ? renderStreakBoard(rows_) : '');
+    });
+  };
+
 
   // ── Export functions ──────────────────────────────────────────
 
   function getExportData(){
-    if(!liveData) return null;
-    const txn  = liveData.txn  || [];
-    const sales= liveData.sales|| [];
-    const avg  = liveData.avg  || [];
-    const ghf  = liveData.ghf  || [];
-    const plus = liveData.plus || [];
+    if(!lastLiveData) return null;
+    const txn  = lastLiveData.txn  || [];
+    const sales= lastLiveData.sales|| [];
+    const avg  = lastLiveData.avg  || [];
+    const ghf  = lastLiveData.ghf  || [];
+    const plus = lastLiveData.plus || [];
     // Merge all rep names
     const names = [...new Set([...txn,...sales,...ghf,...plus].map(r=>r.name))];
     return names.map(name=>{
