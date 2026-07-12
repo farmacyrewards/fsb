@@ -84,9 +84,9 @@
   /* ── Banner ─────────────────────────────────────────── */
   .banner{
     width:100%;
-    background:var(--teal);
+    background:var(--navy);
     background-image:
-      linear-gradient(rgba(27,79,82,0.88), rgba(27,79,82,0.92)),
+      linear-gradient(rgba(30,36,51,0.92), rgba(30,36,51,0.97)),
       url('https://farmacyshop.com/wp-content/uploads/2025/03/DSC03033-1024x690.jpg');
     background-size:cover;
     background-position:center 40%;
@@ -168,8 +168,8 @@
   .sync-status{font-size:12px;color:var(--gray);margin-top:4px;display:none}
 
   /* ── Tabs ───────────────────────────────────────────── */
-  .tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:1.25rem}
-  .tab{padding:9px 4px;font-size:12px;font-weight:500;border-radius:10px;border:0.5px solid var(--border);background:var(--white);cursor:pointer;color:var(--gray);transition:all .15s;text-align:center;line-height:1.3}
+  .tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:1.25rem}
+  .tab{padding:9px 8px;font-size:12px;font-weight:500;min-width:80px;border-radius:10px;border:0.5px solid var(--border);background:var(--white);cursor:pointer;color:var(--gray);transition:all .15s;text-align:center;line-height:1.3}
   .tab .ti{font-size:15px;display:block;margin-bottom:2px}
   .tab.active.txn{background:var(--teal);color:var(--white);border-color:var(--teal)}
   .tab.active.sales{background:#B5830A;color:var(--white);border-color:#B5830A}
@@ -587,17 +587,7 @@
 
 
   <!-- Reward banner — customize REWARD_HEADLINE in SHOP SETUP section -->
-  <div class="reward-banner">
-    <div class="reward-icon-wrap">🎁</div>
-    <div class="reward-text">
-      <div class="reward-eyebrow">⭐ Shop Rewards</div>
-      <div class="reward-headline" id="reward-headline">Earn gift cards just for selling what you love</div>
-      <div class="reward-tiers">
-        <div class="reward-tier">500 pts → $5</div>
-        <div class="reward-tier">1,000 pts → $10</div>
-        <div class="reward-tier">2,500 pts → $25</div>
-        <div class="reward-tier top">5,000 pts → $50 🏆</div>
-      </div>
+      
     </div>
   </div>
 
@@ -608,7 +598,6 @@
     <button class="tab avg" onclick="switchTab('avg',this)"><span class="ti">🛒</span>ATV<span style="font-size:9px;background:#FFD700;color:#5B3A00;padding:1px 6px;border-radius:6px;font-weight:700;display:block;margin-top:2px">$100</span></button>
     <button class="tab ghf" onclick="switchTab('ghf',this)"><span class="ti">🌲</span>GHF Units<span style="font-size:9px;background:#FFD700;color:#5B3A00;padding:1px 6px;border-radius:6px;font-weight:700;display:block;margin-top:2px">$100</span></button>
     <button class="tab plus" onclick="switchTab('plus',this)"><span class="ti">🟪</span>Plus Units</button>
-    <button class="tab points" onclick="switchTab('points',this)"><span class="ti">⭐</span>Points</button>
   </div>
 
   <div id="board-txn"><div class="loading-bar">Loading latest data...</div></div>
@@ -616,9 +605,7 @@
   <div id="board-avg" style="display:none"></div>
   <div id="board-ghf" style="display:none"></div>
   <div id="board-plus" style="display:none"></div>
-  <div id="board-points" style="display:none"></div>
-
-  <div class="footer" id="footer">Farmacy · Internal use only</div>
+    <div class="footer" id="footer">Farmacy · Internal use only</div>
 </div>
 
 <script>
@@ -832,76 +819,7 @@
   function getAllTime(name){ return parseInt(localStorage.getItem(getAllTimeKey(name))||'0'); }
   function addToAllTime(name, pts){ localStorage.setItem(getAllTimeKey(name), String(getAllTime(name)+pts)); }
 
-  function renderPointsBoard(reps){
-    if(!reps||!reps.length){
-      document.getElementById('board-points').innerHTML='<div class="loading-bar">Upload data to see points</div>';
-      return;
-    }
-
-    // Add all-time pts to each rep
-    const withAllTime = reps.map(r=>({ ...r, allTime: getAllTime(r.name) }));
-    // Sort by monthly pts
-    const sorted = [...withAllTime].sort((a,b)=>b.monthlyPts-a.monthlyPts);
-
-    const totalMonthly = sorted.reduce((s,r)=>s+r.monthlyPts,0);
-    const topRep = sorted[0];
-
-    // Team summary
-    const teamHtml =
-      '<div class="points-hero">'
-      +'<div class="points-hero-label">Shop Points — This Month</div>'
-      +'<div class="points-total">'+totalMonthly.toLocaleString()+'</div>'
-      +'<div class="points-sub">Total points earned by the team</div>'
-      +'<div class="points-split">'
-      +'<div class="points-pill"><div class="points-pill-val">'+topRep.monthlyPts.toLocaleString()+'</div><div class="points-pill-label">Top: '+topRep.name.split(' ')[0]+'</div></div>'
-      +'<div class="points-pill"><div class="points-pill-val">'+Math.round(totalMonthly/sorted.length).toLocaleString()+'</div><div class="points-pill-label">Team avg</div></div>'
-      +'</div></div>';
-
-    // How to earn
-    const earnHtml =
-      '<div class="earn-card">'
-      +'<div class="earn-header">How to earn points</div>'
-      +'<div class="earn-row"><span class="earn-icon">🌲</span><span class="earn-desc">Per GHF unit sold</span><span class="earn-pts">10 pts</span></div>'
-      +'<div class="earn-row"><span class="earn-icon">🟪</span><span class="earn-desc">Per Plus unit sold</span><span class="earn-pts">10 pts</span></div>'
-      +'<div class="earn-row"><span class="earn-icon">💵</span><span class="earn-desc">Net sales (0 pts)</span><span class="earn-pts">1 pt</span></div>'
-      +'</div>';
-
-    // Redemption tiers (based on top rep's all-time points for demo)
-    const demoAllTime = topRep.allTime || topRep.monthlyPts;
-    const tierHtml = '<div class="redeem-card">'
-      +'<div class="redeem-header">Redemption tiers — All-time points</div>'
-      + TIERS.map(tier=>{
-          const pct = Math.min(Math.round(demoAllTime/tier.pts*100),100);
-          const unlocked = demoAllTime >= tier.pts;
-          return '<div class="tier-row'+(unlocked?' unlocked':'')+'"><div class="tier-badge">'+tier.emoji+'</div>'
-            +'<div class="tier-info"><div class="tier-reward">'+tier.reward+'</div>'
-            +'<div class="tier-pts-needed">'+tier.pts.toLocaleString()+' points</div>'
-            +'<div class="tier-progress"><div class="tier-bar-bg"><div class="tier-bar-fill" style="width:'+pct+'%"></div></div>'
-            +'<div class="tier-pct">'+pct+'% there</div></div></div>'
-            +(unlocked?'<div class="tier-unlocked-badge">✓ Unlocked</div>':'')
-            +'</div>';
-        }).join('')
-      +'</div>';
-
-    // Rep leaderboard
-    const repRows = sorted.map((rep,i)=>{
-      const color=COLORS[i%COLORS.length];
-      return '<div class="pts-row'+(i===0?' hl':'')+'"><div class="rank">'+rl(i)+'</div>'
-        +'<div class="rep-info"><div class="avatar" style="background:'+color+'22;color:'+color+'">'+ini(rep.name)+'</div>'
-        +'<div class="rep-name">'+rep.name+'</div></div>'
-        +'<div class="pts-val">'+rep.monthlyPts.toLocaleString()+'</div>'
-        +'<div class="pts-monthly">'+rep.allTime.toLocaleString()+'</div>'
-        +'</div>';
-    }).join('');
-
-    const lbHtml = '<div class="points-leaderboard">'
-      +'<div class="pts-head"><div style="text-align:center">#</div><div>Rep</div><div style="text-align:right">This Month</div><div style="text-align:right">All-Time</div></div>'
-      +repRows+'</div>';
-
-    document.getElementById('board-points').innerHTML =
-      '<div class="perennial-badge">⭐ Shop Rewards</div>'
-      +teamHtml+earnHtml+tierHtml+lbHtml;
-  }
+  function renderPointsBoard(reps){ window._pointsData = reps || []; }
 
 
   // ── Export functions ──────────────────────────────────────────
@@ -1682,7 +1600,7 @@
   function switchTab(tab,btn){
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
     btn.classList.add('active');
-    ['txn','sales','avg','ghf','plus','points'].forEach(t=>{
+    ['txn','sales','avg','ghf','plus'].forEach(t=>{
       document.getElementById('board-'+t).style.display=t===tab?'block':'none';
     });
   }
