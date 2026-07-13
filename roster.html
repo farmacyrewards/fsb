@@ -151,6 +151,27 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   .ham-footer-brand span{color:#5B3F8A;font-weight:600}
 </style>
 </head>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getDatabase, ref, set } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey:            'AIzaSyCuJFGrsfmZQwNJtR4RxFwEv2f-dqGCLwc',
+    authDomain:        'farmacyrewards.firebaseapp.com',
+    databaseURL:       'https://farmacyrewards-default-rtdb.firebaseio.com',
+    projectId:         'farmacyrewards',
+    storageBucket:     'farmacyrewards.firebasestorage.app',
+    messagingSenderId: '455717273109',
+    appId:             '1:455717273109:web:fb59aed853532bae12181c',
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  window._fbSetPin = async function(shopKey, name, pin){
+    await set(ref(db, 'pins/' + shopKey + '/' + name.replace(/\s/g,'_')), pin);
+  };
+</script>
 <body>
 <!-- Hamburger overlay + drawer -->
 <div class="ham-overlay" id="ham-overlay" onclick="closeDrawer()"></div>
@@ -163,45 +184,20 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <button class="ham-close-btn" onclick="closeDrawer()">X</button>
   </div>
   <nav class="ham-nav">
-    <div class="ham-section-label">Main</div>
     <a class="ham-nav-item" id="ham-hub" href="https://farmacyrewards.github.io/fsb/">
-      <div class="ham-nav-icon">&#127968;</div>
-      <div class="ham-nav-text"><div class="ham-nav-label">Hub</div><div class="ham-nav-sub">Live overview &amp; stats</div></div>
-    </a>
-    <a class="ham-nav-item" id="ham-leaderboard" href="https://farmacyrewards.github.io/fsb/leaderboard.html">
       <div class="ham-nav-icon">&#127942;</div>
-      <div class="ham-nav-text"><div class="ham-nav-label">Leaderboard</div><div class="ham-nav-sub">Live team rankings</div></div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Current Competitions</div><div class="ham-nav-sub">Live team rankings</div></div>
     </a>
-    <a class="ham-nav-item" id="ham-redeem" href="https://farmacyrewards.github.io/fsb/redeem.html">
-      <div class="ham-nav-icon">&#127873;</div>
-      <div class="ham-nav-text"><div class="ham-nav-label">Redeem Points</div><div class="ham-nav-sub">Submit a reward request</div></div>
-    </a>
-    <a class="ham-nav-item" id="ham-myrep" href="https://farmacyrewards.github.io/fsb/myrep.html">
+    <a class="ham-nav-item" id="ham-myrep" href="https://farmacyrewards.github.io/fsb/points.html">
       <div class="ham-nav-icon">&#11088;</div>
       <div class="ham-nav-text"><div class="ham-nav-label">My Rewards</div><div class="ham-nav-sub">Your personal stats &amp; progress</div></div>
-    </a>
-    <div class="ham-divider"></div>
-    <div class="ham-section-label">Manager</div>
-    <a class="ham-nav-item mgr-item" id="ham-roster" href="https://farmacyrewards.github.io/fsb/roster.html">
-      <div class="ham-nav-icon">&#128101;</div>
-      <div class="ham-nav-text"><div class="ham-nav-label">Roster</div><div class="ham-nav-sub">Manage reps &amp; notifications</div></div>
-      <div class="ham-nav-badge">Lock</div>
-    </a>
-    <a class="ham-nav-item mgr-item" id="ham-dashboard" href="https://farmacyrewards.github.io/fsb/dashboard.html">
-      <div class="ham-nav-icon">&#128202;</div>
-      <div class="ham-nav-text"><div class="ham-nav-label">Dashboard</div><div class="ham-nav-sub">Performance reports</div></div>
-      <div class="ham-nav-badge">Lock</div>
-    </a>
-    <a class="ham-nav-item mgr-item" id="ham-portal" href="https://farmacyrewards.github.io/fsb/brand-portal.html">
-      <div class="ham-nav-icon">&#127807;</div>
-      <div class="ham-nav-text"><div class="ham-nav-label">Brand Portal</div><div class="ham-nav-sub">GHF &amp; Plus read-only view</div></div>
-      <div class="ham-nav-badge">Lock</div>
     </a>
   </nav>
   <div class="ham-footer">
     <div class="ham-footer-brand">Shop Rewards Program</div>
   </div>
 </div>
+
 
 
 <!-- Banner -->
@@ -396,13 +392,21 @@ function deleteRep(name){
 
 function getPinKey(name){ return 'rep_pin_' + SHOP_NAME.replace(/\s/g,'_') + '_' + name.replace(/\s/g,'_'); }
 function getPin(name){ return localStorage.getItem(getPinKey(name)) || ''; }
-function setPin(name, pin){ localStorage.setItem(getPinKey(name), pin); }
-function editPin(name){
+async function setPin(name, pin){
+  localStorage.setItem(getPinKey(name), pin);
+  try {
+    await window._fbSetPin(SHOP_NAME.replace(/\s/g,'_'), name, pin);
+  } catch(e) {
+    console.error('Firebase PIN sync failed:', e);
+    alert('PIN saved on this device, but failed to sync to the cloud. Other devices may not see it yet — check your connection and try again.');
+  }
+}
+async function editPin(name){
   const existing = getPin(name);
   const pin = prompt('Set a 4-6 digit PIN for ' + name + ':' + (existing ? ' (current: '+existing+')' : ''), existing || '');
   if(pin === null) return;
   if(pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)){ alert('PIN must be 4-6 digits only.'); return; }
-  setPin(name, pin);
+  await setPin(name, pin);
   renderRoster();
 }
 function renderRoster(){
@@ -493,16 +497,10 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDraw
   var page = window.location.pathname.split('/').pop() || 'index.html';
   var map = {
     'index.html':'ham-hub', '':'ham-hub',
-    'leaderboard.html':'ham-leaderboard',
-    'redeem.html':'ham-redeem',
-    'myrep.html':'ham-myrep',
-    'roster.html':'ham-roster',
-    'dashboard.html':'ham-dashboard',
-    'brand-portal.html':'ham-portal',
+    'leaderboard.html':'ham-hub',
+    'points.html':'ham-myrep',
   };
-  var lbKeywords = ['leaderboard'];
-  var isLB = lbKeywords.some(function(k){ return page.includes(k); });
-  var activeId = isLB ? 'ham-leaderboard' : (map[page] || '');
+  var activeId = map[page] || '';
   if(activeId){ var el=document.getElementById(activeId); if(el) el.classList.add('active'); }
   var shopEl = document.getElementById('ham-shop-name');
   if(shopEl){
