@@ -192,6 +192,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="ham-nav-icon">&#11088;</div>
       <div class="ham-nav-text"><div class="ham-nav-label">My Rewards</div><div class="ham-nav-sub">Your personal stats &amp; progress</div></div>
     </a>
+    <div class="ham-divider"></div>
+    <a class="ham-nav-item mgr-item" id="ham-roster" href="https://farmacyrewards.github.io/fsb/roster.html">
+      <div class="ham-nav-icon">&#128101;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Rep Roster</div><div class="ham-nav-sub">Manage reps &amp; set PINs</div></div>
+      <div class="ham-nav-badge">Lock</div>
+    </a>
   </nav>
   <div class="ham-footer">
     <div class="ham-footer-brand">Shop Rewards Program</div>
@@ -499,6 +505,7 @@ document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDraw
     'index.html':'ham-hub', '':'ham-hub',
     'leaderboard.html':'ham-hub',
     'points.html':'ham-myrep',
+    'roster.html':'ham-roster',
   };
   var activeId = map[page] || '';
   if(activeId){ var el=document.getElementById(activeId); if(el) el.classList.add('active'); }
