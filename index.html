@@ -920,7 +920,8 @@
       const ghfU = g.units||g.ghf||0;
       const plusU= p.units||p.plus||0;
       const netS = s.sales||0;
-      const monthlyPts = Math.round(ghfU*10 + plusU*10);
+      // Points: 9pts per GHF unit, 9pts per Plus unit, 1pt per $100 net sales
+      const monthlyPts = Math.round(ghfU*9 + plusU*9 + netS*0.01);
       const allTimePts = getLiveAllTime(name);
       return {
         name, txn:t.txn||0, sales:netS,
@@ -1733,9 +1734,11 @@
           const sales=Math.round(d.sales*100)/100;
           const ghf=Math.round(d.ghf);
           const plus=Math.round(d.plus);
-          // Points: 10pts per GHF unit, 10pts per Plus unit.
-          // (Net sales weighting intentionally not yet included — pending formula redesign.)
-          const monthlyPts=Math.round(ghf*10 + plus*10);
+          // Points: 9pts per GHF unit, 9pts per Plus unit, 1pt per $100 net sales.
+          // Coefficients solved from June 2026 actuals to preserve the same average
+          // points/rep (and therefore the same tier-redemption pace) as the old
+          // 10pts/unit-only formula.
+          const monthlyPts=Math.round(ghf*9 + plus*9 + sales*0.01);
           return {
             name, txn, sales,
             avg: txn>0?Math.round(sales/txn*100)/100:0,
