@@ -60,6 +60,16 @@
       return false;
     }
   };
+
+  window.saveAllTimePoints = async function(shopKey, name, liveTotal) {
+    try {
+      await set(ref(db, 'points_alltime/' + shopKey + '/' + name.replace(/\s/g,'_')), liveTotal);
+      return true;
+    } catch(err) {
+      console.error('All-time points sync error:', err);
+      return false;
+    }
+  };
 </script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap');
@@ -770,6 +780,37 @@
   function getAllTime(name){ return parseInt(localStorage.getItem(getAllTimeKey(name))||'0'); }
   function addToAllTime(name, pts){ localStorage.setItem(getAllTimeKey(name), String(getAllTime(name)+pts)); }
 
+  // Tracks the current in-progress month's points separately from the finalized
+  // all-time total, so re-uploading a corrected file mid-month doesn't double-count,
+  // and points only get folded into the permanent all-time total once, when the
+  // month actually rolls over.
+  function getCurMonthKeyKey(name){ return 'pts_curmonth_key_'+SHOP_NAME.replace(/\s/g,'_')+'_'+name.replace(/\s/g,'_'); }
+  function getCurMonthAmtKey(name){ return 'pts_curmonth_amt_'+SHOP_NAME.replace(/\s/g,'_')+'_'+name.replace(/\s/g,'_'); }
+  function getCurMonthAmt(name){ return parseFloat(localStorage.getItem(getCurMonthAmtKey(name))||'0'); }
+
+  // Call once per upload, after monthlyPts is known for every rep. Includes the
+  // streak bonus so consistency is actually rewarded, not just displayed.
+  // Also syncs the corrected live total to Firebase so points.html (used by
+  // reps on their own devices) can show accurate tier progress.
+  async function creditMonthlyPoints(reps){
+    const currentMonth = STREAK_MONTH_KEY();
+    const shopKey = SHOP_NAME.replace(/\s/g,'_');
+    for(const rep of reps){
+      const totalWithBonus = rep.monthlyPts + streakBonusPoints(rep.name);
+      const storedMonth = localStorage.getItem(getCurMonthKeyKey(rep.name)) || '';
+      if(storedMonth && storedMonth !== currentMonth){
+        // A new month has started — finalize the completed month into all-time, once.
+        addToAllTime(rep.name, getCurMonthAmt(rep.name));
+      }
+      localStorage.setItem(getCurMonthKeyKey(rep.name), currentMonth);
+      localStorage.setItem(getCurMonthAmtKey(rep.name), String(totalWithBonus));
+      await window.saveAllTimePoints(shopKey, rep.name, getLiveAllTime(rep.name));
+    }
+  }
+
+  // Live cumulative total for display: finalized all-time + current month so far.
+  function getLiveAllTime(name){ return getAllTime(name) + getCurMonthAmt(name); }
+
   function renderPointsBoard(reps){ window._pointsData = reps || []; }
 
   // ── Rendering helpers ───────────────────────────────────────────
@@ -880,7 +921,7 @@
       const plusU= p.units||p.plus||0;
       const netS = s.sales||0;
       const monthlyPts = Math.round(ghfU*10 + plusU*10);
-      const allTimePts = getAllTime(name);
+      const allTimePts = getLiveAllTime(name);
       return {
         name, txn:t.txn||0, sales:netS,
         avg:a.avg||0, ghf:ghfU, plus:plusU,
@@ -1692,7 +1733,8 @@
           const sales=Math.round(d.sales*100)/100;
           const ghf=Math.round(d.ghf);
           const plus=Math.round(d.plus);
-          // Points: 10pts per GHF unit, 10pts per Plus unit, 1pt per $1 net sales
+          // Points: 10pts per GHF unit, 10pts per Plus unit.
+          // (Net sales weighting intentionally not yet included — pending formula redesign.)
           const monthlyPts=Math.round(ghf*10 + plus*10);
           return {
             name, txn, sales,
@@ -1727,6 +1769,7 @@
         // Update streak data for all reps
         const top5Names = liveData.txn.slice(0,5).map(r=>r.name);
         updateStreaks(reps, top5Names);
+        await creditMonthlyPoints(reps);
         const saved=await window.saveToFirebase(liveData,updatedAt);
         document.getElementById('sync-status').textContent=saved
           ?'✅ Synced — all devices now show updated data'

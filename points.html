@@ -131,7 +131,7 @@
     <div class="personal-card">
       <div class="pts-name" id="personal-name"></div>
       <div class="pts-number" id="personal-pts">0</div>
-      <div class="pts-label">points this period</div>
+      <div class="pts-label" id="personal-pts-sub">points this period</div>
       <div class="tier-section">
         <div class="tier-heading">Redemption tiers</div>
         <div id="tier-list"></div>
@@ -253,18 +253,24 @@
   async function showPersonal(name){
     document.getElementById('pin-wall').style.display = 'none';
     document.getElementById('personal-view').style.display = 'block';
-    document.getElementById('personal-name').textContent = name + ' — This Period';
+    document.getElementById('personal-name').textContent = name + ' — Lifetime Points';
     try {
-      const snap = await get(ref(db, 'leaderboard/liveData/points'));
+      const shopKey = SHOP_NAME.replace(/\s/g,'_');
+      const [pointsSnap, allTimeSnap] = await Promise.all([
+        get(ref(db, 'leaderboard/liveData/points')),
+        get(ref(db, 'points_alltime/' + shopKey + '/' + name.replace(/\s/g,'_')))
+      ]);
       let monthly = 0;
-      if(snap.exists()){
-        const rep = snap.val().find(function(r){ return r.name === name; });
+      if(pointsSnap.exists()){
+        const rep = pointsSnap.val().find(function(r){ return r.name === name; });
         if(rep) monthly = rep.monthlyPts || 0;
       }
-      document.getElementById('personal-pts').textContent = monthly.toLocaleString();
+      const lifetime = allTimeSnap.exists() ? (allTimeSnap.val() || 0) : monthly;
+      document.getElementById('personal-pts').textContent = lifetime.toLocaleString();
+      document.getElementById('personal-pts-sub').textContent = monthly.toLocaleString() + ' pts this period';
       document.getElementById('tier-list').innerHTML = TIERS.map(function(t){
-        const pct = Math.min(Math.round(monthly / t.pts * 100), 100);
-        const unlocked = monthly >= t.pts;
+        const pct = Math.min(Math.round(lifetime / t.pts * 100), 100);
+        const unlocked = lifetime >= t.pts;
         return '<div class="tier-row">'
           + '<div class="tier-emoji">' + t.emoji + '</div>'
           + '<div class="tier-info">'
